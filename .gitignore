@@ -1,0 +1,19 @@
+# Environment
+.env
+
+# Generated output
+output/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# macOS
+.DS_Store
+
+# Fonts (user-provided, not tracked)
+fonts/
