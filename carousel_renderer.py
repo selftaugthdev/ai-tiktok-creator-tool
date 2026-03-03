@@ -2,31 +2,33 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
+from chart_generator import generate_chart_image
+
 # Canvas dimensions (TikTok portrait)
 WIDTH = 1080
 HEIGHT = 1920
 
 # Colour palette
-BG_TOP = (26, 26, 46)        # #1a1a2e
-BG_BOTTOM = (22, 33, 62)     # #16213e
-ACCENT_COLOR = (124, 58, 237)  # #7c3aed
-COLOR_WHITE = (255, 255, 255)
-COLOR_GRAY = (180, 180, 200)
-COLOR_WATERMARK = (120, 120, 150)
+BG_COLOR = (250, 218, 221)      # #FADADD soft pink
+ACCENT_COLOR = (255, 107, 157)  # #FF6B9D hot pink
+COLOR_HEADLINE = (45, 45, 45)   # #2D2D2D
+COLOR_BODY = (85, 85, 85)       # #555555
+COLOR_WATERMARK = (170, 170, 170)
 
 # Layout constants
 MARGIN_X = 80
-ACCENT_BAR_HEIGHT = 14
-PADDING_BOTTOM = 80          # space above accent bar
-SLIDE_NUM_MARGIN = 60        # inset from edges for slide counter
-CONTENT_CENTER_Y = 860       # vertical midpoint for headline block
+ACCENT_BAR_HEIGHT = 12
+PADDING_BOTTOM = 80
+SLIDE_NUM_MARGIN = 60
+ILLUS_MAX_W = 600
+ILLUS_MAX_H = 600
 
 
 # ---------------------------------------------------------------------------
 # Font loading
 # ---------------------------------------------------------------------------
 
-def _try_font(path: str, size: int) -> ImageFont.FreeTypeFont | None:
+def _try_font(path: str, size: int):
     try:
         return ImageFont.truetype(path, size)
     except (OSError, IOError):
@@ -70,9 +72,11 @@ def load_font(size: int, bold: bool = False) -> ImageFont.ImageFont:
     win_bold = ["C:/Windows/Fonts/arialbd.ttf", "C:/Windows/Fonts/calibrib.ttf"]
     win_regular = ["C:/Windows/Fonts/arial.ttf", "C:/Windows/Fonts/calibri.ttf"]
 
-    candidates = (macos_bold if bold else macos_regular) + \
-                 (linux_bold if bold else linux_regular) + \
-                 (win_bold if bold else win_regular)
+    candidates = (
+        (macos_bold if bold else macos_regular)
+        + (linux_bold if bold else linux_regular)
+        + (win_bold if bold else win_regular)
+    )
 
     for path in candidates:
         font = _try_font(path, size)
@@ -87,24 +91,11 @@ def load_font(size: int, bold: bool = False) -> ImageFont.ImageFont:
 # Drawing helpers
 # ---------------------------------------------------------------------------
 
-def _gradient_background() -> Image.Image:
-    """Create a top-to-bottom gradient background image."""
-    img = Image.new("RGB", (WIDTH, HEIGHT))
-    draw = ImageDraw.Draw(img)
-    for y in range(HEIGHT):
-        t = y / (HEIGHT - 1)
-        r = int(BG_TOP[0] + (BG_BOTTOM[0] - BG_TOP[0]) * t)
-        g = int(BG_TOP[1] + (BG_BOTTOM[1] - BG_TOP[1]) * t)
-        b = int(BG_TOP[2] + (BG_BOTTOM[2] - BG_TOP[2]) * t)
-        draw.line([(0, y), (WIDTH - 1, y)], fill=(r, g, b))
-    return img
-
-
-def _wrap_text(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.ImageFont, max_width: int) -> list[str]:
+def _wrap_text(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.ImageFont, max_width: int) -> list:
     """Break text into lines that fit within max_width pixels."""
     words = text.split()
-    lines: list[str] = []
-    current: list[str] = []
+    lines = []
+    current = []
 
     for word in words:
         test = " ".join(current + [word])
@@ -120,7 +111,7 @@ def _wrap_text(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.ImageFont, 
     return lines
 
 
-def _text_block_height(draw: ImageDraw.ImageDraw, lines: list[str], font: ImageFont.ImageFont, line_gap: int) -> int:
+def _text_block_height(draw: ImageDraw.ImageDraw, lines: list, font: ImageFont.ImageFont, line_gap: int) -> int:
     """Return total pixel height of a block of wrapped lines."""
     if not lines:
         return 0
@@ -131,7 +122,7 @@ def _text_block_height(draw: ImageDraw.ImageDraw, lines: list[str], font: ImageF
 
 def _draw_centered_lines(
     draw: ImageDraw.ImageDraw,
-    lines: list[str],
+    lines: list,
     font: ImageFont.ImageFont,
     y_start: int,
     color: tuple,
@@ -162,9 +153,10 @@ def render_slide(
     total_slides: int,
     app_name: str,
     output_path: Path,
+    illustration_path: Path = None,
 ) -> None:
     """Render a single slide and save it as a PNG."""
-    img = _gradient_background()
+    img = Image.new("RGB", (WIDTH, HEIGHT), color=BG_COLOR)
     draw = ImageDraw.Draw(img)
 
     headline_font = load_font(88, bold=True)
@@ -174,7 +166,7 @@ def render_slide(
 
     available_width = WIDTH - 2 * MARGIN_X
 
-    # ── Slide counter (top-right) ────────────────────────────────────────────
+    # ── Slide counter (top-right, hot pink) ──────────────────────────────────
     counter_text = f"{slide_index} / {total_slides}"
     cb = draw.textbbox((0, 0), counter_text, font=counter_font)
     counter_w = cb[2] - cb[0]
@@ -182,45 +174,66 @@ def render_slide(
         (WIDTH - SLIDE_NUM_MARGIN - counter_w, SLIDE_NUM_MARGIN),
         counter_text,
         font=counter_font,
-        fill=COLOR_GRAY,
-    )
-
-    # ── Headline ─────────────────────────────────────────────────────────────
-    headline_lines = _wrap_text(draw, slide["headline"], headline_font, available_width)
-    headline_h = _text_block_height(draw, headline_lines, headline_font, 16)
-
-    # ── Body ─────────────────────────────────────────────────────────────────
-    body_lines = _wrap_text(draw, slide["body"], body_font, available_width)
-    body_h = _text_block_height(draw, body_lines, body_font, 14)
-
-    gap_between = 52  # pixels between headline block and body block
-
-    # Centre the combined content block around CONTENT_CENTER_Y
-    total_h = headline_h + gap_between + body_h
-    block_top = CONTENT_CENTER_Y - total_h // 2
-
-    # Draw a small accent bar above the headline
-    accent_pip_y = block_top - 36
-    draw.rectangle(
-        [(WIDTH // 2 - 60, accent_pip_y), (WIDTH // 2 + 60, accent_pip_y + 6)],
         fill=ACCENT_COLOR,
     )
 
-    # Draw headline
-    y_after_headline = _draw_centered_lines(
-        draw, headline_lines, headline_font, block_top, COLOR_WHITE, line_gap=16
-    )
+    # ── Measure text blocks ───────────────────────────────────────────────────
+    headline_lines = _wrap_text(draw, slide["headline"], headline_font, available_width)
+    body_lines = _wrap_text(draw, slide["body"], body_font, available_width)
+    headline_h = _text_block_height(draw, headline_lines, headline_font, 16)
+    body_h = _text_block_height(draw, body_lines, body_font, 14)
 
-    # Draw body
-    _draw_centered_lines(
-        draw, body_lines, body_font, y_after_headline + gap_between, COLOR_GRAY, line_gap=14
-    )
+    # ── Resolve visual element — chart takes priority over illustration ───────
+    visual_img = None
+    chart_data = slide.get("chart_data")
+    if chart_data:
+        visual_img = generate_chart_image(chart_data)
+    elif illustration_path:
+        visual_img = Image.open(illustration_path).convert("RGBA")
+        visual_img.thumbnail((ILLUS_MAX_W, ILLUS_MAX_H), Image.LANCZOS)
+
+    # ── Calculate total content block height ─────────────────────────────────
+    block_gap = 60 if visual_img else 80
+    if visual_img:
+        total_h = headline_h + block_gap + visual_img.height + block_gap + body_h
+    else:
+        total_h = headline_h + block_gap + body_h
+
+    # ── Centre block in usable vertical space ────────────────────────────────
+    usable_top = SLIDE_NUM_MARGIN + 80
+    usable_bottom = HEIGHT - ACCENT_BAR_HEIGHT - PADDING_BOTTOM
+    block_top = max((usable_top + usable_bottom) // 2 - total_h // 2, usable_top)
+
+    # ── Accent pip above headline ─────────────────────────────────────────────
+    pip_y = block_top - 36
+    if pip_y >= usable_top - 10:
+        draw.rectangle(
+            [(WIDTH // 2 - 60, pip_y), (WIDTH // 2 + 60, pip_y + 6)],
+            fill=ACCENT_COLOR,
+        )
+
+    # ── Headline ──────────────────────────────────────────────────────────────
+    y = block_top
+    y = _draw_centered_lines(draw, headline_lines, headline_font, y, COLOR_HEADLINE, line_gap=16)
+    y += block_gap
+
+    # ── Visual (chart or illustration) ───────────────────────────────────────
+    if visual_img:
+        x_offset = (WIDTH - visual_img.width) // 2
+        if visual_img.mode == "RGBA":
+            img.paste(visual_img, (x_offset, y), mask=visual_img.split()[3])
+        else:
+            img.paste(visual_img, (x_offset, y))
+        y += visual_img.height + block_gap
+
+    # ── Body ──────────────────────────────────────────────────────────────────
+    _draw_centered_lines(draw, body_lines, body_font, y, COLOR_BODY, line_gap=14)
 
     # ── Bottom accent bar ─────────────────────────────────────────────────────
     bar_y = HEIGHT - ACCENT_BAR_HEIGHT
     draw.rectangle([(0, bar_y), (WIDTH, HEIGHT)], fill=ACCENT_COLOR)
 
-    # ── App name watermark (above accent bar, right-aligned) ─────────────────
+    # ── App name watermark (above accent bar, right-aligned) ──────────────────
     wm_text = app_name
     wb = draw.textbbox((0, 0), wm_text, font=watermark_font)
     wm_w = wb[2] - wb[0]
@@ -237,10 +250,11 @@ def render_slide(
 
 
 def render_carousel(
-    slides: list[dict],
+    slides: list,
     output_dir: Path,
     app_name: str,
     total_slides: int,
+    illustration_path: Path = None,
 ) -> None:
     """Render every slide in a carousel and save PNGs into output_dir."""
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -253,5 +267,6 @@ def render_carousel(
             total_slides=total_slides,
             app_name=app_name,
             output_path=filename,
+            illustration_path=illustration_path,
         )
         print(f"    slide {i:02d}/{total_slides} → {filename.name}")

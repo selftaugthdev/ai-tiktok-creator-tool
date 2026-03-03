@@ -16,16 +16,18 @@ def generate_carousel(app_name: str, topic: str, num_slides: int = 7) -> list[di
 Return a JSON array of exactly {num_slides} slide objects. Each object must have:
 - "headline": punchy, attention-grabbing text (max 8 words, ALL CAPS encouraged)
 - "body": supporting text (1-2 sentences, max 25 words)
+- "chart_data": (optional) only include when the slide content is naturally suited to a simple bar chart (e.g. statistics, rankings, percentages). Format as {{"labels": [...], "values": [...], "title": "..."}}. Omit this field entirely if not applicable. Do not force a chart onto slides where it does not add value.
 
 Slide structure:
 1. Hook slide: A bold, surprising or alarming statement about {topic} that stops the scroll.
 2-{num_slides - 1}. Value slides ({num_value_slides} slides): One specific, actionable tip or insight about {topic} per slide. Each tip must be distinct.
-{num_slides}. CTA slide: Encourage users to download {app_name} to track or learn more about {topic}.
+{num_slides}. CTA slide: Encourage users to download {app_name} on iOS. The body must end with "Download {app_name} on iOS. Link in bio."
 
 Rules:
 - Headlines must be short and punchy — no filler words.
 - Body text should feel conversational and credible.
 - Make each value slide feel like a standalone revelation.
+- Do NOT use em-dashes (— or –) anywhere in the text. Use commas or periods instead.
 - Return ONLY a valid JSON array. No markdown fences, no explanation."""
 
     message = client.messages.create(
