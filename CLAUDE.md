@@ -15,12 +15,14 @@ Python CLI that generates TikTok-style image carousels (1080×1920 PNG slides) f
 ```bash
 python3 main.py --app "MigraineCast" --topic "weather triggers for migraines" --count 3
 python3 main.py --app "Calm SOS" --topic "anxiety grounding techniques" --count 1 --slides 5
+python3 main.py --app "MigraineCast" --topic "migraine phases" --count 1 --slides 5 --style infographic
 ```
 
 - `--app` — app name (used in watermark and CTA copy)
 - `--topic` — content theme for the carousel
 - `--count` — number of carousels to generate
 - `--slides` — slides per carousel (default: 7, minimum: 3)
+- `--style` — slide style: `regular` (default) or `infographic` (emoji grid for value slides)
 
 Use `python3`, not `python` — `python` is not on PATH on this machine.
 
@@ -84,6 +86,28 @@ Without visual: headline → body with 80px gap.
 - Falls back to `default` if field is missing or invalid
 - Assets live in `assets/mascot_{expression}.png` (transparent PNGs)
 
+### Infographic layout (value slides when `--style infographic`)
+Hook (slide 1) and CTA (last slide) always use regular layout. Only value slides (slides 2–N-1) use the infographic grid.
+
+Infographic slide JSON shape:
+```json
+{
+  "headline": "YOUR MIGRAINE HAS PHASES",
+  "subtitle": "Hangover Phase Symptoms",
+  "items": [
+    {"label": "Intense fatigue", "emoji": "😴"},
+    {"label": "Brain fog", "emoji": "🧠"}
+  ],
+  "mascot_expression": "sad"
+}
+```
+
+Layout: headline → subtitle pill (hot pink rounded badge, white text) → 3-column emoji grid.
+- Grid: 3 columns, cell width 280px, 40px column gap → 920px total (centered in 1080)
+- Each cell: 120px soft-pink circle + emoji (52px, Apple Color Emoji / fallback) + label text (36px) below
+- Row gap: 40px; grid starts 40px below subtitle pill
+- Emoji font: tries Apple Color Emoji on macOS, then Noto Color Emoji on Linux, falls back to regular font
+
 ### Font strategy
 Checks `./fonts/Bold.ttf` and `./fonts/Regular.ttf` first, then falls back to system fonts (macOS Helvetica/Arial → Linux Liberation/DejaVu → Windows Arial), then PIL default.
 
@@ -91,6 +115,7 @@ Checks `./fonts/Bold.ttf` and `./fonts/Regular.ttf` first, then falls back to sy
 
 ## Prompt Rules (script_gen.py)
 
+### Regular style
 - Slide 1: hook (bold/alarming statement)
 - Slides 2–N-1: value slides (distinct actionable tips)
 - Last slide: CTA — body must end with `"Download {app_name} on iOS. Link in bio."`
@@ -99,6 +124,12 @@ Checks `./fonts/Bold.ttf` and `./fonts/Regular.ttf` first, then falls back to sy
 - Body: max 25 words, conversational
 - `chart_data` is optional — only included when content suits a bar chart (stats, rankings, percentages). Format: `{"labels": [...], "values": [...], "title": "..."}`
 - `mascot_expression` — required on every slide. One of: `calm`, `default`, `sad`, `smug`, `stormy`, `warning`. CTA slide must always be `smug`.
+
+### Infographic style
+- Slide 1 and last slide: same fields as regular (`headline` + `body` + `mascot_expression`)
+- Value slides: `headline` + `subtitle` (≤6 words, title case) + `items` (list of `{label, emoji}`, 4–8 items) + `mascot_expression`
+- No `body` or `chart_data` on infographic value slides
+- `max_tokens` bumped to 2048 for infographic (larger JSON payload)
 
 ---
 

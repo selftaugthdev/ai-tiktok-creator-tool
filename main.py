@@ -37,6 +37,12 @@ Examples:
         default=None,
         help="Path to a PNG file to composite onto slides (overridden by chart_data when present).",
     )
+    parser.add_argument(
+        "--style",
+        choices=["regular", "infographic"],
+        default="regular",
+        help="Slide style: 'regular' (default) or 'infographic' (emoji grid for value slides).",
+    )
     return parser.parse_args()
 
 
@@ -70,7 +76,7 @@ def main() -> None:
     ] if output_base.exists() else []
     next_num = max(existing, default=0) + 1
 
-    print(f"\nGenerating {args.count} carousel(s) — {args.slides} slides each")
+    print(f"\nGenerating {args.count} carousel(s) — {args.slides} slides each  [{args.style}]")
     print(f"App: {args.app!r}  |  Topic: {args.topic!r}\n")
 
     for i in range(args.count):
@@ -78,7 +84,7 @@ def main() -> None:
         print(f"[{i + 1}/{args.count}] Fetching content from Claude...")
 
         try:
-            slides = generate_carousel(args.app, args.topic, args.slides)
+            slides = generate_carousel(args.app, args.topic, args.slides, style=args.style)
         except Exception as exc:
             print(f"  Error generating content: {exc}", file=sys.stderr)
             continue
