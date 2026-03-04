@@ -183,7 +183,7 @@ def _infographic_grid_height(num_items: int, label_line_h: int = 42) -> int:
     """Estimate pixel height of the infographic emoji grid."""
     cols = 3
     rows = (num_items + cols - 1) // cols
-    row_h = INFOGRAPHIC_CIRCLE_D + INFOGRAPHIC_LABEL_GAP + label_line_h + INFOGRAPHIC_ROW_GAP
+    row_h = INFOGRAPHIC_CIRCLE_D + INFOGRAPHIC_LABEL_GAP + label_line_h * 2 + 8 + INFOGRAPHIC_ROW_GAP
     return rows * row_h - INFOGRAPHIC_ROW_GAP  # no trailing gap after last row
 
 
@@ -233,7 +233,7 @@ def _render_infographic_body(
 
     sample_lb = draw.textbbox((0, 0), "Ag", font=label_font)
     label_line_h = sample_lb[3] - sample_lb[1]
-    row_h = INFOGRAPHIC_CIRCLE_D + INFOGRAPHIC_LABEL_GAP + label_line_h + INFOGRAPHIC_ROW_GAP
+    row_h = INFOGRAPHIC_CIRCLE_D + INFOGRAPHIC_LABEL_GAP + label_line_h * 2 + 8 + INFOGRAPHIC_ROW_GAP
 
     for idx, item in enumerate(items):
         col = idx % cols
