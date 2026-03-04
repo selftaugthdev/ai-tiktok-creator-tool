@@ -23,6 +23,13 @@ SLIDE_NUM_MARGIN = 60
 ILLUS_MAX_W = 600
 ILLUS_MAX_H = 600
 
+# Mascot constants
+MASCOT_DIR = Path("assets")
+MASCOT_W = 280
+MASCOT_PAD_X = 60
+MASCOT_PAD_Y = 20
+VALID_EXPRESSIONS = {"calm", "default", "sad", "smug", "stormy", "warning"}
+
 
 # ---------------------------------------------------------------------------
 # Font loading
@@ -154,6 +161,7 @@ def render_slide(
     app_name: str,
     output_path: Path,
     illustration_path: Path = None,
+    mascot_expression: str = "default",
 ) -> None:
     """Render a single slide and save it as a PNG."""
     img = Image.new("RGB", (WIDTH, HEIGHT), color=BG_COLOR)
@@ -246,6 +254,18 @@ def render_slide(
         fill=COLOR_WATERMARK,
     )
 
+    # ── Mascot (lower-left, composited on top) ───────────────────────────────
+    expression = mascot_expression if mascot_expression in VALID_EXPRESSIONS else "default"
+    mascot_path = MASCOT_DIR / f"mascot_{expression}.png"
+    if mascot_path.exists():
+        mascot_img = Image.open(mascot_path).convert("RGBA")
+        ratio = MASCOT_W / mascot_img.width
+        mascot_h = int(mascot_img.height * ratio)
+        mascot_img = mascot_img.resize((MASCOT_W, mascot_h), Image.LANCZOS)
+        mascot_x = MASCOT_PAD_X
+        mascot_y = bar_y - MASCOT_PAD_Y - mascot_h
+        img.paste(mascot_img, (mascot_x, mascot_y), mask=mascot_img.split()[3])
+
     img.save(output_path, "PNG")
 
 
@@ -261,6 +281,7 @@ def render_carousel(
 
     for i, slide in enumerate(slides, start=1):
         filename = output_dir / f"slide_{i:02d}.png"
+        mascot_expression = slide.get("mascot_expression", "default")
         render_slide(
             slide=slide,
             slide_index=i,
@@ -268,5 +289,6 @@ def render_carousel(
             app_name=app_name,
             output_path=filename,
             illustration_path=illustration_path,
+            mascot_expression=mascot_expression,
         )
         print(f"    slide {i:02d}/{total_slides} → {filename.name}")

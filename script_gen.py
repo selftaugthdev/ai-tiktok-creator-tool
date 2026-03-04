@@ -17,6 +17,7 @@ Return a JSON array of exactly {num_slides} slide objects. Each object must have
 - "headline": punchy, attention-grabbing text (max 8 words, ALL CAPS encouraged)
 - "body": supporting text (1-2 sentences, max 25 words)
 - "chart_data": (optional) only include when the slide content is naturally suited to a simple bar chart (e.g. statistics, rankings, percentages). Format as {{"labels": [...], "values": [...], "title": "..."}}. Omit this field entirely if not applicable. Do not force a chart onto slides where it does not add value.
+- "mascot_expression": one of "calm", "default", "sad", "smug", "stormy", "warning". Choose based on the slide's emotional tone. The last slide (CTA) must always use "smug".
 
 Slide structure:
 1. Hook slide: A bold, surprising or alarming statement about {topic} that stops the scroll.
@@ -28,6 +29,7 @@ Rules:
 - Body text should feel conversational and credible.
 - Make each value slide feel like a standalone revelation.
 - Do NOT use em-dashes (— or –) anywhere in the text. Use commas or periods instead.
+- Only include information that is well-established in published research. Do not speculate or extrapolate. If a fact is uncertain, omit it rather than guess.
 - Return ONLY a valid JSON array. No markdown fences, no explanation."""
 
     message = client.messages.create(
