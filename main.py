@@ -66,14 +66,22 @@ def main() -> None:
     validate_args(args)
 
     app_slug = args.app.replace(" ", "_")
-    output_base = Path("output") / "carousels" / app_slug
+    topic_slug = args.topic.lower().replace(" ", "-")
+    output_base = Path("output") / "to-upload" / app_slug
 
     # Find the next carousel number so existing ones are never overwritten
-    existing = [
-        int(p.name.split("_")[1])
-        for p in output_base.glob("carousel_*")
-        if p.is_dir() and p.name.split("_")[1].isdigit()
-    ] if output_base.exists() else []
+    # Search both to-upload and uploaded folders to avoid number collisions
+    def _existing_nums(folder: Path):
+        if not folder.exists():
+            return []
+        return [
+            int(p.name.split("_")[1])
+            for p in folder.glob("carousel_*")
+            if p.is_dir() and p.name.split("_")[1].isdigit()
+        ]
+
+    uploaded_base = Path("output") / "uploaded" / app_slug
+    existing = _existing_nums(output_base) + _existing_nums(uploaded_base)
     next_num = max(existing, default=0) + 1
 
     print(f"\nGenerating {args.count} carousel(s) — {args.slides} slides each  [{args.style}]")
@@ -89,7 +97,7 @@ def main() -> None:
             print(f"  Error generating content: {exc}", file=sys.stderr)
             continue
 
-        carousel_dir = output_base / f"carousel_{carousel_num}"
+        carousel_dir = output_base / f"carousel_{carousel_num}_{topic_slug}"
         print(f"[{i}/{args.count}] Rendering slides → {carousel_dir}/")
 
         try:

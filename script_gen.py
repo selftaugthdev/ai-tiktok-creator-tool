@@ -24,12 +24,12 @@ Slide 1 (hook) must have:
 Slides 2 through {num_slides - 1} (value slides, {num_value_slides} slides) must have:
 - "headline": category or theme name (max 8 words, ALL CAPS)
 - "subtitle": short descriptor phrase for the grid below (max 6 words, title case)
-- "items": list of 4-8 objects, each with "label" (short phrase, max 4 words) and "emoji" (a single emoji character). Items must be specific, varied, and relevant to the subtitle.
+- "items": list of 4-6 objects, each with "label" (short phrase, max 4 words) and "emoji" (a single emoji character). Items must be specific, varied, and relevant to the subtitle.
 - "mascot_expression": one of "calm", "default", "sad", "smug", "stormy", "warning". Choose based on emotional tone.
 
 Slide {num_slides} (CTA) must have:
 - "headline": call-to-action headline (max 8 words)
-- "body": must end with "Download {app_name} on iOS. Link in bio."
+- "body": must end with "Download {app_name} on iOS. Link in bio. Or download at www.migrainecast.app"
 - "mascot_expression": must be "smug"
 
 Rules:
@@ -49,7 +49,7 @@ Return a JSON array of exactly {num_slides} slide objects. Each object must have
 Slide structure:
 1. Hook slide: A bold, surprising or alarming statement about {topic} that stops the scroll.
 2-{num_slides - 1}. Value slides ({num_value_slides} slides): One specific, actionable tip or insight about {topic} per slide. Each tip must be distinct.
-{num_slides}. CTA slide: Encourage users to download {app_name} on iOS. The body must end with "Download {app_name} on iOS. Link in bio."
+{num_slides}. CTA slide: Encourage users to download {app_name} on iOS. The body must end with "Download {app_name} on iOS. Link in bio. Or download at www.migrainecast.app"
 
 Rules:
 - Headlines must be short and punchy — no filler words.

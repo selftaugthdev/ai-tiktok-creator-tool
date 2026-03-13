@@ -116,7 +116,7 @@ Check off topics as you use them.
 - [ ] `"what migraine acceptance looks like"`
 - [ ] `"finding community as a chronic migraine sufferer"`
 - [ ] `"how to stay positive when migraines feel out of control"`
-- [ ] `"the invisible disability of chronic migraines"`
+- [X] `"the invisible disability of chronic migraines"`
 - [ ] `"what it feels like when treatment finally works"`
 - [ ] `"how migraine sufferers adapt their lifestyle"`
 - [ ] `"the relief of finally having a diagnosis"`
@@ -152,3 +152,16 @@ Check off topics as you use them.
 - [ ] `"what a week of MigraineCast looks like in real life"`
 - [ ] `"how MigraineCast makes migraine management less stressful"`
 - [ ] `"the story behind why MigraineCast was built"`
+
+---
+
+## Test based on TikTok data
+
+- [X] `"Your face nerve is hijacking your brain"`
+- [X] `"Your weather app is lying to you"`
+- [ ] `"If you've ever cancelled plans because of a headache that came out of nowhere — your body was reading the weather 6 hours ago"`
+- [ ] `"5 signs your body is a better weather app than your iPhone"`
+- [ ] `"Your doctor never told you this about barometric pressure and migraines"`
+- [ ] `"Your brain starts a migraine 24 hours before you feel it. Here's what it's doing"`
+- [ ] `"Every migraine sufferer has said this exact sentence. Science finally has an answer"`
+- [ ] `"The weather changed 6 hours ago. Your head already knew"`

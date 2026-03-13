@@ -127,7 +127,7 @@ Checks `./fonts/Bold.ttf` and `./fonts/Regular.ttf` first, then falls back to sy
 
 ### Infographic style
 - Slide 1 and last slide: same fields as regular (`headline` + `body` + `mascot_expression`)
-- Value slides: `headline` + `subtitle` (≤6 words, title case) + `items` (list of `{label, emoji}`, 4–8 items) + `mascot_expression`
+- Value slides: `headline` + `subtitle` (≤6 words, title case) + `items` (list of `{label, emoji}`, 4–6 items max) + `mascot_expression`
 - No `body` or `chart_data` on infographic value slides
 - `max_tokens` bumped to 2048 for infographic (larger JSON payload)
 

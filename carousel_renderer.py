@@ -23,6 +23,10 @@ SLIDE_NUM_MARGIN = 60
 ILLUS_MAX_W = 600
 ILLUS_MAX_H = 600
 
+# TikTok safe zones (UI chrome that overlaps the image)
+SAFE_ZONE_RIGHT = 160   # engagement buttons on right (~15% of 1080)
+SAFE_ZONE_BOTTOM = 480  # caption/description overlay (~25% of 1920)
+
 # Mascot constants
 MASCOT_DIR = Path("assets")
 MASCOT_W = 280
@@ -30,8 +34,14 @@ MASCOT_PAD_X = 60
 MASCOT_PAD_Y = 20
 VALID_EXPRESSIONS = {"calm", "default", "sad", "smug", "stormy", "warning"}
 
+# Testimonial (CTA slide)
+TESTIMONIAL_FONT_SIZE = 36
+TESTIMONIAL_PAD_X = 40
+TESTIMONIAL_PAD_Y = 22
+TESTIMONIAL_BG = (255, 200, 215)   # slightly deeper pink
+
 # Infographic constants
-INFOGRAPHIC_CELL_W = 280
+INFOGRAPHIC_CELL_W = 240
 INFOGRAPHIC_COL_GAP = 40
 INFOGRAPHIC_CIRCLE_D = 120
 INFOGRAPHIC_EMOJI_SIZE = 52
@@ -206,9 +216,8 @@ def _render_infographic_body(
     # ── Subtitle pill ────────────────────────────────────────────────────────
     sub_bbox = draw.textbbox((0, 0), subtitle, font=subtitle_font)
     sub_w = sub_bbox[2] - sub_bbox[0]
-    sub_h = sub_bbox[3] - sub_bbox[1]
     pill_w = sub_w + INFOGRAPHIC_SUBTITLE_PX * 2
-    pill_h = sub_h + INFOGRAPHIC_SUBTITLE_PY * 2
+    pill_h = sub_bbox[1] + sub_bbox[3] + INFOGRAPHIC_SUBTITLE_PY * 2
     pill_x = (WIDTH - pill_w) // 2
     pill_y = y_start
 
@@ -229,13 +238,15 @@ def _render_infographic_body(
     # ── Emoji grid ───────────────────────────────────────────────────────────
     cols = 3
     total_grid_w = cols * INFOGRAPHIC_CELL_W + (cols - 1) * INFOGRAPHIC_COL_GAP
-    grid_x_start = (WIDTH - total_grid_w) // 2
+    # Center within the horizontal safe zone (left margin → safe right edge)
+    safe_area_w = WIDTH - MARGIN_X - SAFE_ZONE_RIGHT  # 1080-80-160 = 840px
+    grid_x_start = MARGIN_X + max(0, (safe_area_w - total_grid_w) // 2)
 
     sample_lb = draw.textbbox((0, 0), "Ag", font=label_font)
     label_line_h = sample_lb[3] - sample_lb[1]
     row_h = INFOGRAPHIC_CIRCLE_D + INFOGRAPHIC_LABEL_GAP + label_line_h * 2 + 8 + INFOGRAPHIC_ROW_GAP
 
-    for idx, item in enumerate(items):
+    for idx, item in enumerate(items[:6]):
         col = idx % cols
         row = idx // cols
         cell_x = grid_x_start + col * (INFOGRAPHIC_CELL_W + INFOGRAPHIC_COL_GAP)
@@ -309,9 +320,9 @@ def render_slide(
         fill=ACCENT_COLOR,
     )
 
-    # ── Usable area ───────────────────────────────────────────────────────────
+    # ── Usable area (respects TikTok bottom caption safe zone) ───────────────
     usable_top = SLIDE_NUM_MARGIN + 80
-    usable_bottom = HEIGHT - ACCENT_BAR_HEIGHT - PADDING_BOTTOM
+    usable_bottom = HEIGHT - SAFE_ZONE_BOTTOM
 
     # ── Headline (always present) ─────────────────────────────────────────────
     headline_lines = _wrap_text(draw, slide["headline"], headline_font, available_width)
@@ -325,8 +336,7 @@ def render_slide(
         label_font = load_font(INFOGRAPHIC_LABEL_SIZE, bold=False)
 
         sub_bbox = draw.textbbox((0, 0), subtitle, font=subtitle_font)
-        sub_h = sub_bbox[3] - sub_bbox[1]
-        pill_h = sub_h + INFOGRAPHIC_SUBTITLE_PY * 2
+        pill_h = sub_bbox[1] + sub_bbox[3] + INFOGRAPHIC_SUBTITLE_PY * 2
 
         sample_lb = draw.textbbox((0, 0), "Ag", font=label_font)
         label_line_h = sample_lb[3] - sample_lb[1]
@@ -362,6 +372,24 @@ def render_slide(
         body_lines = _wrap_text(draw, slide["body"], body_font, available_width)
         body_h = _text_block_height(draw, body_lines, body_font, 14)
 
+        # Testimonial block (CTA / last slide only)
+        is_cta = slide_index == total_slides
+        testimonial_lines = []
+        testimonial_h = 0
+        testimonial_font = None
+        if is_cta:
+            testimonial_text = (
+                f"\u201cThe {app_name} app (finally) helped me stop "
+                f"being blindsided by my migraines\u201d"
+            )
+            testimonial_font = load_font(TESTIMONIAL_FONT_SIZE, bold=False)
+            testimonial_lines = _wrap_text(
+                draw, testimonial_text, testimonial_font,
+                available_width - TESTIMONIAL_PAD_X * 2,
+            )
+            text_h = _text_block_height(draw, testimonial_lines, testimonial_font, 12)
+            testimonial_h = text_h + TESTIMONIAL_PAD_Y * 2
+
         # Resolve visual element — chart takes priority over illustration
         visual_img = None
         chart_data = slide.get("chart_data")
@@ -373,8 +401,11 @@ def render_slide(
 
         # Calculate total content block height
         block_gap = 60 if visual_img else 80
+        testimonial_gap = 40  # gap between headline and testimonial, and testimonial and body
         if visual_img:
             total_h = headline_h + block_gap + visual_img.height + block_gap + body_h
+        elif is_cta:
+            total_h = headline_h + testimonial_gap + testimonial_h + testimonial_gap + body_h
         else:
             total_h = headline_h + block_gap + body_h
 
@@ -391,7 +422,22 @@ def render_slide(
         # Headline
         y = block_top
         y = _draw_centered_lines(draw, headline_lines, headline_font, y, COLOR_HEADLINE, line_gap=16)
-        y += block_gap
+        y += block_gap if not is_cta else testimonial_gap
+
+        # Testimonial (CTA slide only)
+        if is_cta and testimonial_lines:
+            rect_x = MARGIN_X
+            rect_h = testimonial_h
+            draw.rounded_rectangle(
+                [(rect_x, y), (rect_x + available_width, y + rect_h)],
+                radius=20,
+                fill=TESTIMONIAL_BG,
+            )
+            _draw_centered_lines(
+                draw, testimonial_lines, testimonial_font,
+                y + TESTIMONIAL_PAD_Y, COLOR_BODY, line_gap=12,
+            )
+            y += rect_h + testimonial_gap
 
         # Visual (chart or illustration)
         if visual_img:
@@ -410,7 +456,7 @@ def render_slide(
     draw.rectangle([(0, bar_y), (WIDTH, HEIGHT)], fill=ACCENT_COLOR)
 
     # ── App name watermark (above accent bar, right-aligned) ──────────────────
-    wm_text = app_name
+    wm_text = "www.migrainecast.app" if "migrainecast" in app_name.lower() else app_name
     wb = draw.textbbox((0, 0), wm_text, font=watermark_font)
     wm_w = wb[2] - wb[0]
     wm_h = wb[3] - wb[1]
@@ -423,15 +469,17 @@ def render_slide(
     )
 
     # ── Mascot (lower-left, composited on top) ───────────────────────────────
+    # Skip on infographic value slides — the emoji grid fills that space
+    is_infographic_value = "items" in slide
     expression = mascot_expression if mascot_expression in VALID_EXPRESSIONS else "default"
     mascot_path = MASCOT_DIR / f"mascot_{expression}.png"
-    if mascot_path.exists():
+    if not is_infographic_value and mascot_path.exists():
         mascot_img = Image.open(mascot_path).convert("RGBA")
         ratio = MASCOT_W / mascot_img.width
         mascot_h = int(mascot_img.height * ratio)
         mascot_img = mascot_img.resize((MASCOT_W, mascot_h), Image.LANCZOS)
         mascot_x = MASCOT_PAD_X
-        mascot_y = bar_y - MASCOT_PAD_Y - mascot_h
+        mascot_y = (HEIGHT - SAFE_ZONE_BOTTOM) - MASCOT_PAD_Y - mascot_h
         img.paste(mascot_img, (mascot_x, mascot_y), mask=mascot_img.split()[3])
 
     img.save(output_path, "PNG")
