@@ -103,3 +103,35 @@ General rules:
                 raise ValueError(f"Slide {i + 1} is missing 'body' field.")
 
     return slides
+
+
+def generate_caption(app_name: str, topic: str) -> str:
+    """Generate a TikTok caption (title + description + hashtags) for a carousel."""
+    client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+
+    prompt = f"""Write a TikTok caption for a carousel about "{topic}" promoting the app "{app_name}".
+
+Return plain text in this exact format (no markdown, no extra commentary):
+
+TITLE:
+[one line, the exact topic rephrased as a scroll-stopping TikTok title, max 60 characters]
+
+DESCRIPTION:
+[2-3 short sentences, conversational and direct, written like a real person talking to their audience. No corporate language, no buzzwords.]
+
+HASHTAGS:
+[8-12 relevant hashtags as a single line]
+
+Rules:
+- No em-dashes (— or –). Use commas or periods instead.
+- No AI-sounding phrases like "game-changer", "dive into", "unlock", "journey", "empower".
+- Write like someone who has migraines talking to others who do.
+- The description should make people want to save the post."""
+
+    message = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=512,
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    return message.content[0].text.strip()

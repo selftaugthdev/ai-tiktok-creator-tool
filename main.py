@@ -9,7 +9,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from carousel_renderer import render_carousel
-from script_gen import generate_carousel
+from script_gen import generate_caption, generate_carousel
 
 
 def parse_args() -> argparse.Namespace:
@@ -67,21 +67,24 @@ def main() -> None:
 
     app_slug = args.app.replace(" ", "_")
     topic_slug = args.topic.lower().replace(" ", "-")
-    output_base = Path("output") / "to-upload" / app_slug
+    style_folder = "infographic" if args.style == "infographic" else "regular"
+    output_base = Path("output") / "to-upload" / app_slug / style_folder
 
-    # Find the next carousel number so existing ones are never overwritten
-    # Search both to-upload and uploaded folders to avoid number collisions
-    def _existing_nums(folder: Path):
-        if not folder.exists():
+    # Find the next carousel number so existing ones are never overwritten.
+    # Search all style subfolders under to-upload and uploaded to avoid collisions.
+    def _existing_nums(app_folder: Path):
+        if not app_folder.exists():
             return []
-        return [
-            int(p.name.split("_")[1])
-            for p in folder.glob("carousel_*")
-            if p.is_dir() and p.name.split("_")[1].isdigit()
-        ]
+        nums = []
+        for p in app_folder.rglob("carousel_*"):
+            if p.is_dir():
+                parts = p.name.split("_")
+                if len(parts) > 1 and parts[1].isdigit():
+                    nums.append(int(parts[1]))
+        return nums
 
     uploaded_base = Path("output") / "uploaded" / app_slug
-    existing = _existing_nums(output_base) + _existing_nums(uploaded_base)
+    existing = _existing_nums(Path("output") / "to-upload" / app_slug) + _existing_nums(uploaded_base)
     next_num = max(existing, default=0) + 1
 
     print(f"\nGenerating {args.count} carousel(s) — {args.slides} slides each  [{args.style}]")
@@ -106,6 +109,15 @@ def main() -> None:
         except Exception as exc:
             print(f"  Error rendering slides: {exc}", file=sys.stderr)
             continue
+
+        print(f"[{i + 1}/{args.count}] Generating caption...")
+        try:
+            caption = generate_caption(args.app, args.topic)
+            caption_path = carousel_dir / "caption.txt"
+            caption_path.write_text(caption, encoding="utf-8")
+            print(f"    caption.txt → {caption_path}")
+        except Exception as exc:
+            print(f"  Warning: could not generate caption: {exc}", file=sys.stderr)
 
     print(f"\nDone! Carousels saved to {output_base}/")
 
