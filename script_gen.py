@@ -33,6 +33,8 @@ Slide {num_slides} (CTA) must have:
 - "mascot_expression": must be "smug"
 
 Rules:
+- STAY ON TOPIC. Every value slide must directly address the specific situation or scenario described in the topic. If the topic is about canceling plans, items must be about handling that moment — the guilt, the communication, the recovery — NOT general migraine science or biology.
+- NEVER drift into tangentially related but off-topic content. Tips about heat/ice packs, body posture, or caffeine are off-topic if the subject is an emotional or social situation.
 - Items must be specific and non-obvious. No generic entries like "take medication", "rest", or "drink water" — assume the audience already knows those.
 - Each item should feel like something worth writing down.
 - Do NOT use em-dashes (— or –) anywhere. Use commas or periods instead.
