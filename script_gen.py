@@ -33,6 +33,8 @@ Slide {num_slides} (CTA) must have:
 - "mascot_expression": must be "smug"
 
 Rules:
+- Items must be specific and non-obvious. No generic entries like "take medication", "rest", or "drink water" — assume the audience already knows those.
+- Each item should feel like something worth writing down.
 - Do NOT use em-dashes (— or –) anywhere. Use commas or periods instead.
 - Only include information that is well-established in published research. Do not speculate or extrapolate.
 - Return ONLY a valid JSON array. No markdown fences, no explanation."""
@@ -47,14 +49,21 @@ Return a JSON array of exactly {num_slides} slide objects. Each object must have
 - "mascot_expression": one of "calm", "default", "sad", "smug", "stormy", "warning". Choose based on the slide's emotional tone. The last slide (CTA) must always use "smug".
 
 Slide structure:
-1. Hook slide: A bold, surprising or alarming statement about {topic} that stops the scroll.
-2-{num_slides - 1}. Value slides ({num_value_slides} slides): One specific, actionable tip or insight about {topic} per slide. Each tip must be distinct.
+1. Hook slide: A bold, surprising or alarming statement about {topic} that stops the scroll. Make it feel urgent and personal.
+2-{num_slides - 1}. Value slides ({num_value_slides} slides): One specific, non-obvious tip or insight per slide. Each tip must be distinct.
 {num_slides}. CTA slide: Encourage users to download {app_name} on iOS. The body must end with "Download {app_name} on iOS. Link in bio. Or download at www.migrainecast.app"
 
-Rules:
+Copywriting rules for value slides — this is the most important part:
+- STAY ON TOPIC. Every value slide must directly address the specific situation or scenario described in the topic. If the topic is about canceling plans, tips must be about handling that moment — the guilt, the communication, the recovery, the decision-making — NOT general migraine science or biology.
+- NEVER drift into tangentially related but off-topic content. If someone asked for "tips for canceling plans", they do not want a lecture on caffeine or neck stiffness. They want tips for what to do RIGHT NOW in that situation.
+- NEVER write obvious tips. Assume the audience already knows the basics. No "take your medication", "stay hydrated", "lie in a dark room", "track your triggers" — these are things everyone has heard.
+- Every tip must feel like a revelation. Ask yourself: would a migraine sufferer stop scrolling and think "I didn't know that"? If not, pick a different angle.
+- Lead with the surprising or counterintuitive angle — the emotional truth, the social strategy, or the body mechanism. Make it feel like insider knowledge, not a doctor's pamphlet.
+- Use specific numbers, timeframes, or concrete actions where possible. Vague claims lose trust.
+- Each slide should feel complete as a standalone post.
+
+General rules:
 - Headlines must be short and punchy — no filler words.
-- Body text should feel conversational and credible.
-- Make each value slide feel like a standalone revelation.
 - Do NOT use em-dashes (— or –) anywhere in the text. Use commas or periods instead.
 - Only include information that is well-established in published research. Do not speculate or extrapolate. If a fact is uncertain, omit it rather than guess.
 - Return ONLY a valid JSON array. No markdown fences, no explanation."""

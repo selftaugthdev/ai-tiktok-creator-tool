@@ -95,11 +95,23 @@ Check off topics as you use them.
 
 ---
 
+---
+
+## This-Week-Specific
+
+- [X] `"You're not cancelling plans. Your nervous system is protecting you."`
+- [ ] `"Spring isn't just beautiful. For migraine sufferers, it's the hardest season of the year."`
+- [ ] `"The invisible symptoms nobody believes — until they get a migraine themselves."`
+- [ ] `"What your brain is doing in the 24 hours before a migraine hits."`
+- [ ] `"You've lost hundreds of days to migraines. Here's what was actually happening in your brain."`
+- [ ] `"Why spring rain hits migraine sufferers harder than any other season."`
+- [ ] `"The 5 stages of a weather migraine. You'll recognise every single one."`
+
 ## Emotional / Community
 
-- [ ] `"what it's like living with chronic migraines"`
+- [X] `"what it's like living with chronic migraines"`
 - [ ] `"things migraine sufferers wish people understood"`
-- [ ] `"how migraines affect daily life"`
+- [X] `"how migraines affect daily life"`
 - [ ] `"the emotional toll of cancelling plans due to migraines"`
 - [ ] `"how to explain your migraines to people who don't get it"`
 - [ ] `"migraine guilt — why sufferers feel bad for being in pain"`
@@ -115,7 +127,7 @@ Check off topics as you use them.
 - [ ] `"building a life around an unpredictable condition"`
 - [ ] `"what migraine acceptance looks like"`
 - [ ] `"finding community as a chronic migraine sufferer"`
-- [ ] `"how to stay positive when migraines feel out of control"`
+- [X] `"how to stay positive when migraines feel out of control"`
 - [X] `"the invisible disability of chronic migraines"`
 - [ ] `"what it feels like when treatment finally works"`
 - [ ] `"how migraine sufferers adapt their lifestyle"`

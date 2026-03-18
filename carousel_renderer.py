@@ -455,25 +455,22 @@ def render_slide(
     bar_y = HEIGHT - ACCENT_BAR_HEIGHT
     draw.rectangle([(0, bar_y), (WIDTH, HEIGHT)], fill=ACCENT_COLOR)
 
-    # ── App name watermark (above accent bar, right-aligned) ──────────────────
+    # ── App name watermark (top-left, same row as slide counter) ─────────────
     wm_text = "www.migrainecast.app" if "migrainecast" in app_name.lower() else app_name
-    wb = draw.textbbox((0, 0), wm_text, font=watermark_font)
-    wm_w = wb[2] - wb[0]
-    wm_h = wb[3] - wb[1]
-    wm_y = bar_y - PADDING_BOTTOM // 2 - wm_h
     draw.text(
-        (WIDTH - MARGIN_X - wm_w, wm_y),
+        (SLIDE_NUM_MARGIN, SLIDE_NUM_MARGIN),
         wm_text,
         font=watermark_font,
         fill=COLOR_WATERMARK,
     )
 
     # ── Mascot (lower-left, composited on top) ───────────────────────────────
-    # Skip on infographic value slides — the emoji grid fills that space
+    # Only on hook (slide 1) and CTA (last slide) — skip value slides to avoid overlapping body text
     is_infographic_value = "items" in slide
+    is_hook_or_cta = slide_index == 1 or slide_index == total_slides
     expression = mascot_expression if mascot_expression in VALID_EXPRESSIONS else "default"
     mascot_path = MASCOT_DIR / f"mascot_{expression}.png"
-    if not is_infographic_value and mascot_path.exists():
+    if not is_infographic_value and is_hook_or_cta and mascot_path.exists():
         mascot_img = Image.open(mascot_path).convert("RGBA")
         ratio = MASCOT_W / mascot_img.width
         mascot_h = int(mascot_img.height * ratio)
