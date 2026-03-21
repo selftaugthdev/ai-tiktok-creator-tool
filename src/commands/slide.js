@@ -156,6 +156,34 @@ async function renderSlide(html, outputPath) {
     const page = await browser.newPage();
     await page.setViewport({ width: 1080, height: 1920, deviceScaleFactor: 1 });
     await page.setContent(html, { waitUntil: 'networkidle2' });
+
+    // Auto-scale fonts down until the last statement fits within the slide
+    await page.evaluate(() => {
+      const headline = document.querySelector('h1');
+      const items = document.querySelectorAll('.statement');
+      const SAFE_BOTTOM = 1840; // bottom of usable area (clears watermark)
+
+      let hSize = 86;
+      let sSize = 47;
+
+      for (let i = 0; i < 60; i++) {
+        const last = document.querySelector('.statement:last-child');
+        if (!last) break;
+        if (last.getBoundingClientRect().bottom <= SAFE_BOTTOM) break;
+
+        // Scale statements first, then headline if needed
+        if (sSize > 28) {
+          sSize -= 1;
+          items.forEach(el => { el.style.fontSize = sSize + 'px'; });
+        } else if (hSize > 48) {
+          hSize -= 2;
+          headline.style.fontSize = hSize + 'px';
+        } else {
+          break;
+        }
+      }
+    });
+
     await page.screenshot({ path: outputPath, type: 'png', clip: { x: 0, y: 0, width: 1080, height: 1920 } });
   } finally {
     await browser.close();
