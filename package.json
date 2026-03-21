@@ -1,0 +1,17 @@
+{
+  "name": "migrainecast-content",
+  "version": "1.0.0",
+  "description": "CLI for generating MigraineCast TikTok content assets.",
+  "bin": {
+    "migrainecast-content": "./bin/migrainecast-content.js"
+  },
+  "scripts": {
+    "slide": "node bin/migrainecast-content.js slide"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.5",
+    "puppeteer": "^22.0.0"
+  }
+}

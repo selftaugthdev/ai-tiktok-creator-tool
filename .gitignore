@@ -17,3 +17,7 @@ env/
 
 # Fonts (user-provided, not tracked)
 fonts/
+
+# Node.js
+node_modules/
+package-lock.json
