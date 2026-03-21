@@ -5,14 +5,12 @@ const path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
 const puppeteer = require('puppeteer');
 
-// Brand colors — matches carousel_renderer.py exactly
+// Brand colors — matches carousel_renderer.py
 const COLORS = {
   bg: '#FADADD',
   accent: '#FF6B9D',
-  headline: '#2D2D2D',
-  body: '#555555',
+  text: '#2D2D2D',
   watermark: '#AAAAAA',
-  circleFill: '#FFB6D2',
 };
 
 async function generateStatements(topic) {
@@ -20,23 +18,24 @@ async function generateStatements(topic) {
 
   const message = await client.messages.create({
     model: 'claude-sonnet-4-20250514',
-    max_tokens: 512,
+    max_tokens: 768,
     messages: [
       {
         role: 'user',
-        content: `Generate 6-8 short emotional statements about "${topic}" for people with migraines.
+        content: `Generate 6-8 emotional statements about "${topic}" for people with migraines.
 
-Style: identity validation. Write as if giving words to feelings the reader already has but hasn't been able to express. Each statement should land like recognition, not advice.
+Style: identity validation. Give words to feelings the reader already has but hasn't been able to express. Each statement should land like recognition, not advice.
 
-Examples:
-- "The fear of waking up and knowing the whole day is lost."
-- "Canceling so often that people stop inviting you."
-- "Feeling guilty for something your body did without your permission."
+Examples of the tone and length to aim for:
+- "Brain fog so bad you forget what you were saying mid-sentence."
+- "The fear of waking up with an attack and knowing the whole day is lost."
+- "Feeling guilty for canceling again."
+- "The loneliness of being in pain when no one understands how bad it really is."
+- "The exhaustion that lingers for days after an attack, making even small tasks feel impossible."
 
 Rules:
 - No advice, no silver linings, no solutions. Just honest acknowledgment.
-- Start with "The" or "When you" or a similar grounded phrase.
-- Max 12 words each. Short, punchy, emotionally resonant.
+- Full sentences. Some can be short and punchy, others can breathe a little more.
 - No em-dashes. Use commas or periods instead.
 - No hashtags, no emojis.
 - Return ONLY a JSON array of strings. No markdown, no explanation.`,
@@ -44,7 +43,7 @@ Rules:
     ],
   });
 
-  const raw = message.content[0].text.trim().replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,'');
+  const raw = message.content[0].text.trim().replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
   const statements = JSON.parse(raw);
 
   if (!Array.isArray(statements)) throw new Error('Claude did not return a JSON array.');
@@ -53,17 +52,16 @@ Rules:
 
 function buildHtml(topic, statements) {
   const statementItems = statements
-    .map((s) => `<div class="statement">${escapeHtml(s)}</div>`)
+    .map((s) => `<p class="statement">${escapeHtml(s)}</p>`)
     .join('\n    ');
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=1080" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -77,76 +75,54 @@ function buildHtml(topic, statements) {
     body {
       display: flex;
       flex-direction: column;
-      padding: 90px 100px 104px; /* bottom padding clears accent bar (12px) + watermark row */
+      padding: 100px 96px 80px;
       position: relative;
       font-family: 'Playfair Display', Georgia, serif;
+      color: ${COLORS.text};
     }
 
-    /* Hot pink accent bar, pinned to bottom */
-    .accent-bar {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 12px;
-      background: ${COLORS.accent};
-    }
-
-    /* Small pip above headline, matches carousel style */
-    .pip {
-      width: 120px;
-      height: 6px;
-      background: ${COLORS.accent};
-      border-radius: 3px;
-      margin-bottom: 44px;
-    }
-
-    .headline {
-      color: ${COLORS.headline};
-      font-size: 80px;
+    h1 {
+      font-size: 86px;
       font-weight: 900;
-      line-height: 1.12;
-      letter-spacing: -0.5px;
-      margin-bottom: 64px;
+      line-height: 1.1;
+      text-align: center;
+      margin-bottom: 80px;
+      color: ${COLORS.text};
     }
 
-    /* Statements fill the remaining vertical space, centered */
+    /* Statements grow to fill the remaining space, evenly distributed */
     .statements {
       flex: 1;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      gap: 44px;
+      justify-content: space-evenly;
     }
 
     .statement {
-      color: ${COLORS.body};
-      font-size: 54px;
+      font-size: 52px;
       font-weight: 700;
-      line-height: 1.25;
-      letter-spacing: -0.2px;
+      line-height: 1.3;
+      text-align: left;
+      color: ${COLORS.text};
     }
 
-    /* App name watermark, bottom-right, above accent bar */
     .watermark {
       position: absolute;
-      bottom: 28px;
-      right: 100px;
+      bottom: 32px;
+      right: 96px;
+      font-size: 32px;
+      font-weight: 700;
       color: ${COLORS.watermark};
-      font-family: 'Inter', Arial, sans-serif;
-      font-size: 34px;
-      font-weight: 400;
+      letter-spacing: 0.5px;
     }
   </style>
 </head>
 <body>
-  <div class="pip"></div>
-  <div class="headline">${escapeHtml(topic)}</div>
+  <h1>${escapeHtml(topic)}</h1>
   <div class="statements">
     ${statementItems}
   </div>
   <div class="watermark">MigraineCast</div>
-  <div class="accent-bar"></div>
 </body>
 </html>`;
 }
