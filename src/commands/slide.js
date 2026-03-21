@@ -22,7 +22,7 @@ async function generateStatements(topic) {
     messages: [
       {
         role: 'user',
-        content: `Generate 6-8 emotional statements about "${topic}" for people with migraines.
+        content: `Generate exactly 7 emotional statements about "${topic}" for people with migraines.
 
 Style: identity validation. Give words to feelings the reader already has but hasn't been able to express. Each statement should land like recognition, not advice.
 
@@ -31,14 +31,13 @@ Examples of the tone and length to aim for:
 - "The fear of waking up with an attack and knowing the whole day is lost."
 - "Feeling guilty for canceling again."
 - "The loneliness of being in pain when no one understands how bad it really is."
-- "The exhaustion that lingers for days after an attack, making even small tasks feel impossible."
 
 Rules:
 - No advice, no silver linings, no solutions. Just honest acknowledgment.
-- Full sentences. Some can be short and punchy, others can breathe a little more.
+- Keep each statement to 1-2 lines when read — roughly 10-15 words max. Short, crisp, and direct.
 - No em-dashes. Use commas or periods instead.
 - No hashtags, no emojis.
-- Return ONLY a JSON array of strings. No markdown, no explanation.`,
+- Return ONLY a JSON array of exactly 7 strings. No markdown, no explanation.`,
       },
     ],
   });
@@ -90,18 +89,19 @@ function buildHtml(topic, statements) {
       color: ${COLORS.text};
     }
 
-    /* Statements grow to fill the remaining space, evenly distributed */
+    /* Statements fill remaining space, evenly distributed with explicit minimum gap */
     .statements {
       flex: 1;
       display: flex;
       flex-direction: column;
       justify-content: space-evenly;
+      gap: 32px;
     }
 
     .statement {
-      font-size: 52px;
+      font-size: 47px;
       font-weight: 700;
-      line-height: 1.3;
+      line-height: 1.35;
       text-align: left;
       color: ${COLORS.text};
     }
