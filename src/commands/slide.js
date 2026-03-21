@@ -22,19 +22,18 @@ async function generateStatements(topic) {
     messages: [
       {
         role: 'user',
-        content: `Generate exactly 7 emotional statements about "${topic}" for people with migraines.
+        content: `Generate exactly 7 statements for a TikTok slide with the title: "${topic}"
 
-Style: identity validation. Give words to feelings the reader already has but hasn't been able to express. Each statement should land like recognition, not advice.
+First, read the title and decide which style fits:
 
-Examples of the tone and length to aim for:
-- "Brain fog so bad you forget what you were saying mid-sentence."
-- "The fear of waking up with an attack and knowing the whole day is lost."
-- "Feeling guilty for canceling again."
-- "The loneliness of being in pain when no one understands how bad it really is."
+A) IDENTITY VALIDATION — use this when the title is emotional, experiential, or describes what migraine life feels like. Give words to feelings the reader already has. Each statement lands like recognition, not advice.
+   Examples: "The fear of waking up with an attack and knowing the whole day is lost." / "Feeling guilty for canceling again."
 
-Rules:
-- No advice, no silver linings, no solutions. Just honest acknowledgment.
-- Keep each statement to 1-2 lines when read — roughly 10-15 words max. Short, crisp, and direct.
+B) ACTIONABLE TIPS — use this when the title is a how-to, a guide, or asks for practical advice. Give specific, non-obvious tips the reader can actually use. Each statement is a concrete action or insight.
+   Examples: "Switch overhead lights for warm bedside lamps — harsh ceiling light is one of the biggest hidden triggers." / "Keep unscented cleaning products in every room. Fragrance is a top trigger most people overlook."
+
+Rules for both styles:
+- Keep each statement to 1-2 lines — roughly 10-15 words max. Short and direct.
 - No em-dashes. Use commas or periods instead.
 - No hashtags, no emojis.
 - Return ONLY a JSON array of exactly 7 strings. No markdown, no explanation.`,
