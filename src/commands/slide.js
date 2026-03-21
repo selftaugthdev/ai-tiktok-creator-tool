@@ -166,6 +166,7 @@ async function renderSlide(html, outputPath) {
 async function runSlide({ topic, output }) {
   fs.mkdirSync(output, { recursive: true });
   const outputPath = path.join(output, 'slide.png');
+  const captionPath = path.join(output, 'caption.txt');
 
   console.log(`\nGenerating statements for: "${topic}"`);
   const statements = await generateStatements(topic);
@@ -174,6 +175,10 @@ async function runSlide({ topic, output }) {
   console.log('Rendering slide...');
   const html = buildHtml(topic, statements);
   await renderSlide(html, outputPath);
+
+  const caption = [topic, '', ...statements].join('\n');
+  fs.writeFileSync(captionPath, caption, 'utf8');
+  console.log(`    caption.txt → ${captionPath}`);
 
   console.log(`\nDone. Saved to: ${outputPath}\n`);
 }
