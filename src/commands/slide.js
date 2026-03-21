@@ -106,14 +106,25 @@ function buildHtml(topic, statements) {
       color: ${COLORS.text};
     }
 
-    .watermark {
+    .brand-top {
       position: absolute;
-      bottom: 32px;
-      right: 96px;
+      top: 40px;
+      left: 0;
+      right: 0;
+      text-align: center;
       font-size: 32px;
       font-weight: 700;
       color: ${COLORS.watermark};
       letter-spacing: 0.5px;
+    }
+
+    .watermark {
+      position: absolute;
+      bottom: 32px;
+      right: 96px;
+      font-size: 28px;
+      font-weight: 400;
+      color: ${COLORS.watermark};
     }
   </style>
 </head>
@@ -122,7 +133,8 @@ function buildHtml(topic, statements) {
   <div class="statements">
     ${statementItems}
   </div>
-  <div class="watermark">MigraineCast</div>
+  <div class="brand-top">MigraineCast</div>
+  <div class="watermark">www.migrainecast.app</div>
 </body>
 </html>`;
 }
