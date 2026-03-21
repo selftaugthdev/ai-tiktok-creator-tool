@@ -176,7 +176,7 @@ async function runSlide({ topic, output }) {
   const html = buildHtml(topic, statements);
   await renderSlide(html, outputPath);
 
-  const caption = [topic, '', ...statements].join('\n');
+  const caption = [topic, '', ...statements, '', 'Stay ahead of your migraines with the MigraineCast app, download for free in the appstore or at www.migrainecast.app'].join('\n');
   fs.writeFileSync(captionPath, caption, 'utf8');
   console.log(`    caption.txt → ${captionPath}`);
 
