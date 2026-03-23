@@ -100,12 +100,20 @@ def main() -> None:
             print(f"  Error generating content: {exc}", file=sys.stderr)
             continue
 
+        # Inject app screenshot slides before the CTA (last slide)
+        screenshot_slides = [
+            {"screenshot_path": str(Path("assets") / "Homepage Dark.png"), "mascot_expression": "default"},
+            {"screenshot_path": str(Path("assets") / "Insights Dark.png"), "mascot_expression": "default"},
+        ]
+        slides = slides[:-1] + screenshot_slides + slides[-1:]
+        total_slides = len(slides)
+
         carousel_dir = output_base / f"carousel_{carousel_num}_{topic_slug}"
         print(f"[{i}/{args.count}] Rendering slides → {carousel_dir}/")
 
         try:
             illustration = Path(args.illustration) if args.illustration else None
-            render_carousel(slides, carousel_dir, args.app, args.slides, illustration_path=illustration)
+            render_carousel(slides, carousel_dir, args.app, total_slides, illustration_path=illustration)
         except Exception as exc:
             print(f"  Error rendering slides: {exc}", file=sys.stderr)
             continue

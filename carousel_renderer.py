@@ -324,12 +324,28 @@ def render_slide(
     usable_top = SLIDE_NUM_MARGIN + 80
     usable_bottom = HEIGHT - SAFE_ZONE_BOTTOM
 
-    # ── Headline (always present) ─────────────────────────────────────────────
-    headline_lines = _wrap_text(draw, slide["headline"], headline_font, available_width)
-    headline_h = _text_block_height(draw, headline_lines, headline_font, 16)
+    if "screenshot_path" in slide:
+        # ── Screenshot layout ─────────────────────────────────────────────────
+        try:
+            ss = Image.open(slide["screenshot_path"]).convert("RGBA")
+            # Scale to fill full width; crop top/bottom if taller than canvas
+            scale = WIDTH / ss.width
+            new_h = int(ss.height * scale)
+            ss = ss.resize((WIDTH, new_h), Image.LANCZOS)
+            if new_h > HEIGHT:
+                crop_y = (new_h - HEIGHT) // 2
+                ss = ss.crop((0, crop_y, WIDTH, crop_y + HEIGHT))
+                img.paste(ss, (0, 0), mask=ss.split()[3])
+            else:
+                y_offset = (HEIGHT - new_h) // 2
+                img.paste(ss, (0, y_offset), mask=ss.split()[3])
+        except Exception as exc:
+            print(f"  Warning: could not load screenshot {slide['screenshot_path']}: {exc}")
 
-    if "items" in slide:
+    elif "items" in slide:
         # ── Infographic layout ────────────────────────────────────────────────
+        headline_lines = _wrap_text(draw, slide["headline"], headline_font, available_width)
+        headline_h = _text_block_height(draw, headline_lines, headline_font, 16)
         items = slide.get("items", [])
         subtitle = slide.get("subtitle", "")
         subtitle_font = load_font(INFOGRAPHIC_SUBTITLE_SIZE, bold=True)
@@ -369,6 +385,8 @@ def render_slide(
 
     else:
         # ── Regular layout ────────────────────────────────────────────────────
+        headline_lines = _wrap_text(draw, slide["headline"], headline_font, available_width)
+        headline_h = _text_block_height(draw, headline_lines, headline_font, 16)
         body_lines = _wrap_text(draw, slide["body"], body_font, available_width)
         body_h = _text_block_height(draw, body_lines, body_font, 14)
 

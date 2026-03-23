@@ -89,11 +89,9 @@ Check off topics as you use them.
 - [ ] `"what to eat and avoid on a high-risk weather day"`
 - [ ] `"how to use a migraine diary effectively"`
 - [ ] `"rescue medication tips for migraine attacks"`
-- [ ] `"how to create a low-trigger environment at home"`
-- [ ] `"how to wind down before bed to prevent morning migraines"`
+- [x ] `"how to create a low-trigger environment at home"`
+- [x ] `"how to wind down before bed to prevent morning migraines"`
 - [ ] `"the best hats and sunglasses for light-sensitive migraine sufferers"`
-
----
 
 ---
 
@@ -104,7 +102,7 @@ Check off topics as you use them.
 - [ ] `"The invisible symptoms nobody believes — until they get a migraine themselves."`
 - [ ] `"What your brain is doing in the 24 hours before a migraine hits."`
 - [ ] `"You've lost hundreds of days to migraines. Here's what was actually happening in your brain."`
-- [ ] `"Why spring rain hits migraine sufferers harder than any other season."`
+- [X] `"Why spring rain hits migraine sufferers harder than any other season."`
 - [ ] `"The 5 stages of a weather migraine. You'll recognise every single one."`
 
 ## Emotional / Community
@@ -177,3 +175,38 @@ Check off topics as you use them.
 - [ ] `"Your brain starts a migraine 24 hours before you feel it. Here's what it's doing"`
 - [ ] `"Every migraine sufferer has said this exact sentence. Science finally has an answer"`
 - [ ] `"The weather changed 6 hours ago. Your head already knew"`
+
+---
+
+## Listicle Grid Topics
+
+- [X] `"Migraine Trigger Foods"`
+- [X] `"Warning Signs a Migraine Is Coming"`
+- [ ] `"Things That Make Migraines Worse"`
+- [ ] `"Migraine Relief Methods That Actually Work"`
+- [ ] `"Types of Migraine Attacks"`
+- [ ] `"Surprising Migraine Triggers"`
+- [ ] `"Things Migraineurs Wish You Understood"`
+- [ ] `"Migraine Symptoms Beyond the Headache"`
+- [ ] `"Daily Habits That Help Prevent Migraines"`
+- [ ] `"Questions to Ask Your Doctor About Migraines"`
+- [ ] `"Things to Keep in Your Migraine Emergency Kit"`
+- [ ] `"Ways to Shorten a Migraine Attack"`
+- [ ] `"Surprising Spring Migraine Triggers"`
+- [ ] `"Things That Make Migraines Worse in Spring"`
+- [ ] `"Weather Changes That Trigger Migraines"`
+- [ ] `"Hidden Triggers in Your Daily Routine"`
+- [ ] `"What Happens in Your Brain During a Migraine"`
+- [ ] `"Types of Migraine Attacks Explained"`
+- [ ] `"Hormones That Affect Migraine Frequency"`
+- [ ] `"Ways Sleep Impacts Your Migraines"`
+- [ ] `"Things Migraineurs Are Tired of Hearing"`
+- [ ] `"Ways Migraines Affect Your Social Life"`
+- [ ] `"Things Only Migraineurs Understand"`
+- [ ] `"Spring Activities That Can Trigger Migraines"`
+- [ ] `"Things to Track in Your Migraine Diary"`
+- [ ] `"Foods That Can Help Reduce Migraine Frequency"`
+- [ ] `"Spring Scents and Smells That Trigger Migraines"`
+- [ ] `"Medications Commonly Used for Migraines"`
+- [ ] `"Ways Stress Triggers Migraines"`
+- [ ] `"Things to Do Between Migraine Attacks to Stay Prepared"`
