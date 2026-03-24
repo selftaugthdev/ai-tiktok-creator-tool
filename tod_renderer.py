@@ -157,25 +157,31 @@ def _render_cta(
     total_slides: int,
     app_name: str,
 ) -> None:
-    tagline_font = load_font(CTA_FONT_SIZE, bold=True)
     download_font = load_font(CTA_DOWNLOAD_FONT_SIZE, bold=False)
     available_width = WIDTH - 2 * MARGIN_X
     usable_top = SLIDE_NUM_MARGIN + 80
     usable_bottom = HEIGHT - SAFE_ZONE_BOTTOM
+    usable_h = usable_bottom - usable_top
 
-    # Split tagline into individual sentences for airy spacing
     sentences = _split_sentences(slide_data["text"])
-    SENTENCE_GAP = 40  # extra gap between sentences
-
-    sentence_blocks = [_wrap_text(draw, s, tagline_font, available_width) for s in sentences]
-    sentence_heights = [_text_block_height(draw, b, tagline_font, 16) for b in sentence_blocks]
-    tagline_h = sum(sentence_heights) + SENTENCE_GAP * (len(sentences) - 1)
+    SENTENCE_GAP = 40
 
     logo_h = CTA_LOGO_W
     dl_lines = _wrap_text(draw, CTA_DOWNLOAD_TEXT, download_font, available_width)
     dl_h = _text_block_height(draw, dl_lines, download_font, 12)
 
-    total_h = logo_h + CTA_LOGO_GAP + tagline_h + CTA_TAGLINE_GAP + dl_h
+    # Scale tagline font down until everything fits
+    font_size = CTA_FONT_SIZE
+    while font_size >= 32:
+        tagline_font = load_font(font_size, bold=True)
+        sentence_blocks = [_wrap_text(draw, s, tagline_font, available_width) for s in sentences]
+        sentence_heights = [_text_block_height(draw, b, tagline_font, 16) for b in sentence_blocks]
+        tagline_h = sum(sentence_heights) + SENTENCE_GAP * (len(sentences) - 1)
+        total_h = logo_h + CTA_LOGO_GAP + tagline_h + CTA_TAGLINE_GAP + dl_h
+        if total_h <= usable_h:
+            break
+        font_size -= 4
+
     block_top = max((usable_top + usable_bottom) // 2 - total_h // 2, usable_top)
 
     y = block_top

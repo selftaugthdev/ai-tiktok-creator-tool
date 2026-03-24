@@ -34,6 +34,12 @@ MASCOT_PAD_X = 60
 MASCOT_PAD_Y = 20
 VALID_EXPRESSIONS = {"calm", "default", "sad", "smug", "stormy", "warning"}
 
+# MigraineCast logo (CTA slide)
+MC_LOGO_PATH = Path("assets") / "migraine_logo white.png"
+MC_LOGO_W = 280
+MC_LOGO_RADIUS = 52
+MC_LOGO_GAP = 40   # gap between logo and headline
+
 # Testimonial (CTA slide)
 TESTIMONIAL_FONT_SIZE = 36
 TESTIMONIAL_PAD_X = 40
@@ -187,6 +193,13 @@ def _draw_centered_lines(
         y += line_h + line_gap
 
     return y
+
+
+def _split_sentences(text: str) -> list:
+    """Split text into individual sentences on . ! ? boundaries."""
+    import re
+    parts = re.split(r'(?<=[.!?])\s+', text.strip())
+    return [s.strip() for s in parts if s.strip()]
 
 
 def _infographic_grid_height(num_items: int, label_line_h: int = 42) -> int:
@@ -392,6 +405,16 @@ def render_slide(
 
         # Testimonial block (CTA / last slide only)
         is_cta = slide_index == total_slides
+        BODY_SENTENCE_GAP = 32
+        body_sentence_blocks = None
+        body_sentence_heights = None
+        if is_cta:
+            body_sentences = _split_sentences(slide["body"])
+            if len(body_sentences) > 1:
+                body_sentence_blocks = [_wrap_text(draw, s, body_font, available_width) for s in body_sentences]
+                body_sentence_heights = [_text_block_height(draw, b, body_font, 14) for b in body_sentence_blocks]
+                body_h = sum(body_sentence_heights) + BODY_SENTENCE_GAP * (len(body_sentences) - 1)
+
         testimonial_lines = []
         testimonial_h = 0
         testimonial_font = None
@@ -417,20 +440,37 @@ def render_slide(
             visual_img = Image.open(illustration_path).convert("RGBA")
             visual_img.thumbnail((ILLUS_MAX_W, ILLUS_MAX_H), Image.LANCZOS)
 
+        # Load logo for CTA slide
+        mc_logo_img = None
+        if is_cta and MC_LOGO_PATH.exists():
+            mc_logo_img = Image.open(MC_LOGO_PATH).convert("RGBA")
+            mc_logo_img = mc_logo_img.resize((MC_LOGO_W, MC_LOGO_W), Image.LANCZOS)
+
         # Calculate total content block height
         block_gap = 60 if visual_img else 80
         testimonial_gap = 40  # gap between headline and testimonial, and testimonial and body
+        logo_prefix_h = (MC_LOGO_W + MC_LOGO_GAP) if mc_logo_img else 0
         if visual_img:
             total_h = headline_h + block_gap + visual_img.height + block_gap + body_h
         elif is_cta:
-            total_h = headline_h + testimonial_gap + testimonial_h + testimonial_gap + body_h
+            total_h = logo_prefix_h + headline_h + testimonial_gap + testimonial_h + testimonial_gap + body_h
         else:
             total_h = headline_h + block_gap + body_h
 
         block_top = max((usable_top + usable_bottom) // 2 - total_h // 2, usable_top)
 
+        # Logo (CTA slide, above headline)
+        y = block_top
+        if mc_logo_img:
+            mask = Image.new("L", (MC_LOGO_W, MC_LOGO_W), 0)
+            mask_draw = ImageDraw.Draw(mask)
+            mask_draw.rounded_rectangle([(0, 0), (MC_LOGO_W, MC_LOGO_W)], radius=MC_LOGO_RADIUS, fill=255)
+            logo_x = (WIDTH - MC_LOGO_W) // 2
+            img.paste(mc_logo_img, (logo_x, y), mask=mask)
+            y += MC_LOGO_W + MC_LOGO_GAP
+
         # Accent pip above headline
-        pip_y = block_top - 36
+        pip_y = y - 36
         if pip_y >= usable_top - 10:
             draw.rectangle(
                 [(WIDTH // 2 - 60, pip_y), (WIDTH // 2 + 60, pip_y + 6)],
@@ -438,7 +478,6 @@ def render_slide(
             )
 
         # Headline
-        y = block_top
         y = _draw_centered_lines(draw, headline_lines, headline_font, y, COLOR_HEADLINE, line_gap=16)
         y += block_gap if not is_cta else testimonial_gap
 
@@ -467,7 +506,12 @@ def render_slide(
             y += visual_img.height + block_gap
 
         # Body
-        _draw_centered_lines(draw, body_lines, body_font, y, COLOR_BODY, line_gap=14)
+        if body_sentence_blocks:
+            for i, (block, bh) in enumerate(zip(body_sentence_blocks, body_sentence_heights)):
+                _draw_centered_lines(draw, block, body_font, y, COLOR_BODY, line_gap=14)
+                y += bh + (BODY_SENTENCE_GAP if i < len(body_sentence_blocks) - 1 else 0)
+        else:
+            _draw_centered_lines(draw, body_lines, body_font, y, COLOR_BODY, line_gap=14)
 
     # ── Bottom accent bar ─────────────────────────────────────────────────────
     bar_y = HEIGHT - ACCENT_BAR_HEIGHT
@@ -483,9 +527,9 @@ def render_slide(
     )
 
     # ── Mascot (lower-left, composited on top) ───────────────────────────────
-    # Only on hook (slide 1) and CTA (last slide) — skip value slides to avoid overlapping body text
+    # Only on hook (slide 1) — skip CTA (logo is there now) and value slides
     is_infographic_value = "items" in slide
-    is_hook_or_cta = slide_index == 1 or slide_index == total_slides
+    is_hook_or_cta = slide_index == 1
     expression = mascot_expression if mascot_expression in VALID_EXPRESSIONS else "default"
     mascot_path = MASCOT_DIR / f"mascot_{expression}.png"
     if not is_infographic_value and is_hook_or_cta and mascot_path.exists():
