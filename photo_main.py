@@ -75,7 +75,7 @@ def main() -> None:
         print(f"[{i + 1}/{args.count}] Rendering slides → {carousel_dir}/")
 
         try:
-            render_photo_carousel(slides, carousel_dir, args.app)
+            render_photo_carousel(slides, carousel_dir, args.app, topic=args.topic)
         except Exception as exc:
             print(f"  Error rendering slides: {exc}", file=sys.stderr)
             continue
