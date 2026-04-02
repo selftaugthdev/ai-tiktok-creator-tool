@@ -33,18 +33,22 @@ def generate_photo_carousel(app_name: str, topic: str, num_slides: int) -> list:
     value_photos = [p for p in photos if not p.startswith("hook/")]
 
     hook_photo_list = "\n".join(f"  - {p}" for p in hook_photos) if hook_photos else "  (none yet — pick from value photos)"
-    value_photo_list = "\n".join(f"  - {p}" for p in value_photos)
-    num_value = num_slides - 2
+    all_value_photos = value_photos + hook_photos  # hook photos also available for value slides
+    value_photo_list = "\n".join(f"  - {p}" for p in all_value_photos)
+
+    # Claude generates hook + value slides only — CTA is always the fixed homepage slide
+    claude_slides = num_slides - 1
+    num_value = claude_slides - 1
 
     prompt = f"""Create TikTok photo-overlay carousel content about "{topic}" for the app "{app_name}".
 
-Hook photos (use ONLY these for slide 1):
+Hook photos (preferred for slide 1 — woman with phone, happy/surprised reactions):
 {hook_photo_list}
 
-Value/background photos (use for slides 2 onward):
+All available photos (use for any slide):
 {value_photo_list}
 
-Return a JSON array of exactly {num_slides} slide objects.
+Return a JSON array of exactly {claude_slides} slide objects.
 
 Slide 1 (hook):
 - "headline": a conversational, disbelief-style scroll-stopper in the style of one of these examples (make your own variation, do not copy verbatim):
@@ -54,20 +58,22 @@ Slide 1 (hook):
   * "So this app provides a detailed PDF report for all my migraine triggers to give to my doctor?"
   * "You're telling me there's an app that warns me for a migraine based on my personal triggers?"
   The hook must feel like a real person's reaction or a question they'd actually ask. Tie it directly to "{topic}".
-- "background_photo": pick from hook photos only (the woman-with-phone / happy woman style fits this tone)
+- "background_photo": prefer hook photos for slide 1, but use any photo if it's a stronger contextual match
 
-Slides 2 to {num_slides - 1} (value slides, {num_value} total):
+Slides 2 to {claude_slides} (value slides, {num_value} total):
 - "headline": punchy point (max 7 words, ALL CAPS encouraged)
 - "body": supporting detail (max 18 words, conversational)
-- "background_photo": most contextually relevant photo from the value/background list
-
-Slide {num_slides} (CTA — no background_photo needed, handled automatically):
-- "headline": short call-to-action (max 7 words)
-- "body": must end with "Download {app_name} on iOS. Link in bio."
+- "background_photo": pick the single most contextually relevant photo for this slide's specific content
 
 Rules:
+- PHOTO MATCHING IS CRITICAL. Read every filename carefully. If a filename directly matches the slide content, always use it — it beats any generic mood match. Examples:
+  * A slide about doctor reports → use "hook/MigraineCast_Report.png" or "hook/Handing_report_on_phone_to_doctor.jpg" or "hook/woman_showing_phone_with_pdf_report.jpg"
+  * A slide about caffeine → use "props/coffee_cup.jpg"
+  * A slide about alcohol triggers → use "props/glass_of_wine.jpg"
+  * A slide about sleep → use "lifestyle/person_in_bed_not_sleeping.jpg" or "lifestyle/woman_waking_up_groggy.jpg"
+  * A slide about light sensitivity → use "lifestyle/woman_wearing_sunglasses_indoor.jpg"
+  * A slide about barometric pressure → use "weather/barometric_pressure_change.jpg" or "weather/barometer.jpg"
 - Every slide must use a different background_photo — no repeats
-- Match photo mood to slide content (stormy sky for weather slides, lifestyle for struggle, props for triggers)
 - No em-dashes (— or –). Use commas or periods instead
 - Return ONLY a valid JSON array. No markdown fences, no explanation."""
 
@@ -86,7 +92,7 @@ Rules:
 
     if not isinstance(slides, list):
         raise ValueError("API response is not a JSON array.")
-    if len(slides) != num_slides:
-        raise ValueError(f"Expected {num_slides} slides, got {len(slides)}.")
+    if len(slides) != claude_slides:
+        raise ValueError(f"Expected {claude_slides} slides, got {len(slides)}.")
 
     return slides

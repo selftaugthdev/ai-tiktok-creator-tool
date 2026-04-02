@@ -182,9 +182,9 @@ Check off topics as you use them.
 
 - [X] `"Migraine Trigger Foods"`
 - [X] `"Warning Signs a Migraine Is Coming"`
-- [ ] `"Things That Make Migraines Worse"`
-- [ ] `"Migraine Relief Methods That Actually Work"`
-- [ ] `"Types of Migraine Attacks"`
+- [X] `"Things That Make Migraines Worse"`
+- [X] `"Migraine Relief Methods That Actually Work"`
+- [X] `"Types of Migraine Attacks"`
 - [ ] `"Surprising Migraine Triggers"`
 - [ ] `"Things Migraineurs Wish You Understood"`
 - [ ] `"Migraine Symptoms Beyond the Headache"`
@@ -192,7 +192,7 @@ Check off topics as you use them.
 - [ ] `"Questions to Ask Your Doctor About Migraines"`
 - [ ] `"Things to Keep in Your Migraine Emergency Kit"`
 - [ ] `"Ways to Shorten a Migraine Attack"`
-- [ ] `"Surprising Spring Migraine Triggers"`
+- [X] `"Surprising Spring Migraine Triggers"`
 - [ ] `"Things That Make Migraines Worse in Spring"`
 - [ ] `"Weather Changes That Trigger Migraines"`
 - [ ] `"Hidden Triggers in Your Daily Routine"`
@@ -208,5 +208,5 @@ Check off topics as you use them.
 - [ ] `"Foods That Can Help Reduce Migraine Frequency"`
 - [ ] `"Spring Scents and Smells That Trigger Migraines"`
 - [ ] `"Medications Commonly Used for Migraines"`
-- [ ] `"Ways Stress Triggers Migraines"`
+- [X] `"Ways Stress Triggers Migraines"`
 - [ ] `"Things to Do Between Migraine Attacks to Stay Prepared"`

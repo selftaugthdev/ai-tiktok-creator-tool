@@ -117,12 +117,26 @@ def _paste_logo(img: Image.Image, logo_path: Path, logo_w: int, logo_radius: int
 # Slide renderers
 # ---------------------------------------------------------------------------
 
-def _render_fullbleed(photo_path: Path, output_path: Path) -> None:
-    """Render a photo full-bleed with no overlays."""
-    if photo_path.exists():
-        img = _load_and_crop(photo_path)
+HOMEPAGE_CTA_HEADLINE = "STOP BEING BLINDSIDED BY MIGRAINES"
+HOMEPAGE_CTA_BODY = "Download MigraineCast on iOS. Link in bio."
+
+
+def _render_homepage_cta(output_path: Path) -> None:
+    """Final slide: homepage photo + fixed headline + body bubbles."""
+    if HOMEPAGE_SLIDE_PATH.exists():
+        img = _load_and_crop(HOMEPAGE_SLIDE_PATH)
     else:
         img = Image.new("RGB", (WIDTH, HEIGHT), (20, 20, 20))
+
+    draw = ImageDraw.Draw(img)
+    headline_font = load_font(VALUE_HEADLINE_SIZE, bold=True)
+    body_font = load_font(VALUE_BODY_SIZE, bold=False)
+
+    _draw_bubble(draw, HOMEPAGE_CTA_HEADLINE, headline_font, VALUE_TOP_BUBBLE_Y)
+
+    body_bh = _bubble_height(draw, HOMEPAGE_CTA_BODY, body_font)
+    _draw_bubble(draw, HOMEPAGE_CTA_BODY, body_font, VALUE_BOTTOM_BUBBLE_BOTTOM - body_bh)
+
     img.save(output_path, "PNG")
 
 
@@ -232,28 +246,17 @@ def render_photo_carousel(slides: list, output_dir: Path, app_name: str, topic: 
     """Render every slide. Injects topic slide after hook automatically."""
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Build render queue: hook → topic slide → value slides → homepage slide → cta
-    queue = []
-    for i, slide in enumerate(slides):
-        if i == len(slides) - 1:
-            queue.append(("homepage", None))  # inject before CTA
-        queue.append(("ai", slide))
-        if i == 0:
-            queue.append(("topic", None))
-
+    # Build render queue: hook → value slides → homepage CTA (always fixed last)
+    queue = [("ai", slide) for slide in slides] + [("homepage", None)]
     total = len(queue)
 
     for i, (kind, slide) in enumerate(queue, start=1):
         filename = output_dir / f"slide_{i:02d}.png"
 
-        if kind == "topic":
-            _render_topic_slide(topic, filename)
-        elif kind == "homepage":
-            _render_fullbleed(HOMEPAGE_SLIDE_PATH, filename)
+        if kind == "homepage":
+            _render_homepage_cta(filename)
         elif i == 1:
             _render_hook(slide, filename, app_name)
-        elif i == total:
-            _render_cta(slide, filename, app_name)
         else:
             _render_value(slide, filename)
 
