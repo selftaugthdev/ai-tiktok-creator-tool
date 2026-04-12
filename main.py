@@ -8,7 +8,9 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+import carousel_renderer
 from carousel_renderer import render_carousel
+from platforms import PLATFORMS
 from script_gen import generate_caption, generate_carousel
 
 
@@ -43,6 +45,12 @@ Examples:
         default="regular",
         help="Slide style: 'regular' (default) or 'infographic' (emoji grid for value slides).",
     )
+    parser.add_argument(
+        "--platform",
+        choices=["tiktok", "instagram"],
+        default="tiktok",
+        help="Target platform: 'tiktok' (1080×1920, default) or 'instagram' (1080×1350).",
+    )
     return parser.parse_args()
 
 
@@ -65,10 +73,13 @@ def main() -> None:
     args = parse_args()
     validate_args(args)
 
+    platform_cfg = PLATFORMS[args.platform]
+    carousel_renderer.configure_platform(platform_cfg)
+
     app_slug = args.app.replace(" ", "_")
     topic_slug = args.topic.lower().replace(" ", "-")
     style_folder = "infographic" if args.style == "infographic" else "regular"
-    output_base = Path("output") / "to-upload" / app_slug / style_folder
+    output_base = Path("output") / "to-upload" / app_slug / args.platform / style_folder
 
     # Find the next carousel number so existing ones are never overwritten.
     # Search all style subfolders under to-upload and uploaded to avoid collisions.
@@ -87,7 +98,7 @@ def main() -> None:
     existing = _existing_nums(Path("output") / "to-upload" / app_slug) + _existing_nums(uploaded_base)
     next_num = max(existing, default=0) + 1
 
-    print(f"\nGenerating {args.count} carousel(s) — {args.slides} slides each  [{args.style}]")
+    print(f"\nGenerating {args.count} carousel(s) — {args.slides} slides each  [{args.style}] [{args.platform}]")
     print(f"App: {args.app!r}  |  Topic: {args.topic!r}\n")
 
     for i in range(args.count):

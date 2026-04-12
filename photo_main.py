@@ -8,8 +8,9 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from photo_renderer import render_photo_carousel
+from photo_renderer import configure_platform, render_photo_carousel
 from photo_script_gen import generate_photo_carousel
+from platforms import PLATFORMS
 
 
 def parse_args() -> argparse.Namespace:
@@ -26,6 +27,12 @@ Examples:
     parser.add_argument("--topic", required=True, help="Content topic.")
     parser.add_argument("--count", type=int, default=1, help="Number of carousels (default: 1).")
     parser.add_argument("--slides", type=int, default=5, help="Slides per carousel (default: 5, min: 3).")
+    parser.add_argument(
+        "--platform",
+        choices=["tiktok", "instagram"],
+        default="tiktok",
+        help="Target platform: 'tiktok' (1080×1920, default) or 'instagram' (1080×1350).",
+    )
     return parser.parse_args()
 
 
@@ -43,9 +50,11 @@ def main() -> None:
     if args.slides < 3:
         sys.exit("Error: --slides must be at least 3 (1 hook + 1 value + 1 CTA).")
 
+    configure_platform(PLATFORMS[args.platform])
+
     app_slug = args.app.replace(" ", "_")
     topic_slug = args.topic.lower().replace(" ", "-")
-    output_base = Path("output") / "to-upload" / app_slug / "photo"
+    output_base = Path("output") / "to-upload" / app_slug / args.platform / "photo"
 
     # Find next carousel number (never overwrite existing)
     existing = []
@@ -58,7 +67,7 @@ def main() -> None:
                         existing.append(int(parts[1]))
     next_num = max(existing, default=0) + 1
 
-    print(f"\nGenerating {args.count} photo carousel(s) — {args.slides} slides each")
+    print(f"\nGenerating {args.count} photo carousel(s) — {args.slides} slides each  [{args.platform}]")
     print(f"App: {args.app!r}  |  Topic: {args.topic!r}\n")
 
     for i in range(args.count):

@@ -25,7 +25,8 @@ SLIDE_NUM_MARGIN = 60
 ILLUS_MAX_W = 600
 ILLUS_MAX_H = 600
 
-# TikTok safe zones (UI chrome that overlaps the image)
+# Platform safe zones (UI chrome that overlaps the image) — defaults are TikTok
+SAFE_ZONE_TOP = 200     # status bar + nav tabs at top
 SAFE_ZONE_RIGHT = 160   # engagement buttons on right (~15% of 1080)
 SAFE_ZONE_BOTTOM = 480  # caption/description overlay (~25% of 1920)
 
@@ -75,6 +76,21 @@ INFOGRAPHIC_GRID_TOP_GAP = 40
 INFOGRAPHIC_HEADLINE_GAP = 50
 INFOGRAPHIC_SUBTITLE_SIZE = 43
 INFOGRAPHIC_CIRCLE_FILL = (255, 182, 210)  # lighter pink for icon circles
+
+
+# ---------------------------------------------------------------------------
+# Platform configuration
+# ---------------------------------------------------------------------------
+
+def configure_platform(cfg) -> None:
+    """Update module-level layout constants for the target platform.
+    Call this before rendering when using a non-default platform."""
+    global WIDTH, HEIGHT, SAFE_ZONE_TOP, SAFE_ZONE_RIGHT, SAFE_ZONE_BOTTOM
+    WIDTH = cfg.width
+    HEIGHT = cfg.height
+    SAFE_ZONE_TOP = cfg.safe_zone_top
+    SAFE_ZONE_RIGHT = cfg.safe_zone_right
+    SAFE_ZONE_BOTTOM = cfg.safe_zone_bottom
 
 
 # ---------------------------------------------------------------------------
@@ -375,8 +391,8 @@ def render_slide(
         fill=ACCENT_COLOR,
     )
 
-    # ── Usable area (respects TikTok bottom caption safe zone) ───────────────
-    usable_top = SLIDE_NUM_MARGIN + 80
+    # ── Usable area (respects platform safe zones) ───────────────────────────
+    usable_top = SAFE_ZONE_TOP
     usable_bottom = HEIGHT - SAFE_ZONE_BOTTOM
 
     if "screenshot_path" in slide:

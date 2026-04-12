@@ -14,6 +14,7 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
+import carousel_renderer as _cr
 from carousel_renderer import (
     _draw_centered_lines,
     _draw_stars,
@@ -70,6 +71,26 @@ CTA_LOGO_W = 280
 CTA_LOGO_RADIUS = 52
 CTA_LOGO_Y = 260
 CTA_LOGO_GAP = 56
+
+
+# ---------------------------------------------------------------------------
+# Platform configuration
+# ---------------------------------------------------------------------------
+
+def configure_platform(cfg) -> None:
+    """Update layout constants for the target platform. Call before rendering."""
+    global HEIGHT, HOOK_BUBBLE_Y, VALUE_TOP_BUBBLE_Y
+    global HOOK_BRANDING_BOTTOM, VALUE_BOTTOM_BUBBLE_BOTTOM, CTA_LOGO_Y
+    _cr.configure_platform(cfg)
+    HEIGHT = cfg.height
+    # Top bubbles sit just below the platform's top chrome
+    HOOK_BUBBLE_Y = cfg.safe_zone_top + 30
+    VALUE_TOP_BUBBLE_Y = cfg.safe_zone_top + 30
+    # Bottom-anchored elements sit just above the platform's bottom chrome
+    HOOK_BRANDING_BOTTOM = cfg.height - cfg.safe_zone_bottom - 20
+    VALUE_BOTTOM_BUBBLE_BOTTOM = cfg.height - cfg.safe_zone_bottom - 20
+    # CTA logo sits below the top chrome with a small gap
+    CTA_LOGO_Y = cfg.safe_zone_top + 60
 
 
 # ---------------------------------------------------------------------------
