@@ -102,8 +102,7 @@ def main() -> None:
 
         # Inject app screenshot slides before the CTA (last slide)
         screenshot_slides = [
-            {"screenshot_path": str(Path("assets") / "Home Premium.png"), "mascot_expression": "default"},
-            {"screenshot_path": str(Path("assets") / "Triggers Dark.png"), "mascot_expression": "default"},
+            {"screenshot_path": str(Path("assets") / "MigraineCast Showing Home Page.jpg"), "mascot_expression": "default"},
         ]
         slides = slides[:-1] + screenshot_slides + slides[-1:]
         total_slides = len(slides)

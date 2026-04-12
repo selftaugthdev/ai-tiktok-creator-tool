@@ -9,18 +9,22 @@ Slide order:
   N. CTA (app screenshot + dark overlay + logo + bubbles)
 """
 
+import random
 from pathlib import Path
 
 from PIL import Image, ImageDraw
 
 from carousel_renderer import (
     _draw_centered_lines,
+    _draw_stars,
     _text_block_height,
     _wrap_text,
     load_font,
     MARGIN_X,
     WIDTH,
     HEIGHT,
+    REVIEWS,
+    ACCENT_COLOR,
 )
 
 PHOTOS_DIR = Path("photos")
@@ -46,7 +50,7 @@ CTA_HEADLINE_SIZE = 62
 CTA_BODY_SIZE = 46
 
 # ── Hook positioning ──────────────────────────────────────────────────────────
-HOOK_BUBBLE_Y = 140              # top of hook text bubble
+HOOK_BUBBLE_Y = 230              # top of hook text bubble (below TikTok top chrome ~200px)
 HOOK_BRANDING_BOTTOM = HEIGHT - 500  # bottom edge of logo+name block
 HOOK_LOGO_W = 130
 HOOK_LOGO_RADIUS = 26
@@ -54,7 +58,7 @@ HOOK_LOGO_GAP = 14               # gap between logo and app name bubble
 HOOK_NAME_FONT_SIZE = 36
 
 # ── Value slide positioning ───────────────────────────────────────────────────
-VALUE_TOP_BUBBLE_Y = 120
+VALUE_TOP_BUBBLE_Y = 230         # below TikTok top chrome ~200px
 VALUE_BOTTOM_BUBBLE_BOTTOM = HEIGHT - 500   # bottom bubble bottom edge
 
 # ── Topic slide ───────────────────────────────────────────────────────────────
@@ -120,9 +124,48 @@ def _paste_logo(img: Image.Image, logo_path: Path, logo_w: int, logo_radius: int
 HOMEPAGE_CTA_HEADLINE = "STOP BEING BLINDSIDED BY MIGRAINES"
 HOMEPAGE_CTA_BODY = "Download MigraineCast on iOS. Link in bio."
 
+REVIEW_BUBBLE_QUOTE_SIZE = 40
+REVIEW_BUBBLE_AUTHOR_SIZE = 32
+REVIEW_BUBBLE_GAP = 16
+REVIEW_BUBBLE_STAR_OUTER_R = 22
+REVIEW_BUBBLE_STAR_INNER_R = 9
+
+
+def _draw_review_bubble(draw: ImageDraw.ImageDraw, review: dict, y: int) -> int:
+    """Draw a white review bubble with stars, quote, and author. Returns y after bubble."""
+    text_max_w = BUBBLE_W - 2 * BUBBLE_PAD_X
+    quote_font = load_font(REVIEW_BUBBLE_QUOTE_SIZE, bold=False)
+    author_font = load_font(REVIEW_BUBBLE_AUTHOR_SIZE, bold=False)
+
+    star_h = REVIEW_BUBBLE_STAR_OUTER_R * 2
+
+    quote_lines = _wrap_text(draw, review["quote"], quote_font, text_max_w)
+    quote_h = _text_block_height(draw, quote_lines, quote_font, BUBBLE_LINE_GAP)
+
+    author_lines = _wrap_text(draw, review["author"], author_font, text_max_w)
+    author_h = _text_block_height(draw, author_lines, author_font, BUBBLE_LINE_GAP)
+
+    text_h = star_h + REVIEW_BUBBLE_GAP + quote_h + REVIEW_BUBBLE_GAP + author_h
+    bubble_h = text_h + 2 * BUBBLE_PAD_Y
+
+    draw.rounded_rectangle(
+        [(MARGIN_X, y), (MARGIN_X + BUBBLE_W, y + bubble_h)],
+        radius=BUBBLE_RADIUS,
+        fill=BUBBLE_COLOR,
+    )
+
+    inner_y = y + BUBBLE_PAD_Y
+    _draw_stars(draw, WIDTH // 2, inner_y, 5, REVIEW_BUBBLE_STAR_OUTER_R, REVIEW_BUBBLE_STAR_INNER_R, ACCENT_COLOR)
+    inner_y += star_h + REVIEW_BUBBLE_GAP
+    inner_y = _draw_centered_lines(draw, quote_lines, quote_font, inner_y, BUBBLE_TEXT_COLOR, line_gap=BUBBLE_LINE_GAP)
+    inner_y += REVIEW_BUBBLE_GAP
+    _draw_centered_lines(draw, author_lines, author_font, inner_y, (100, 100, 100), line_gap=BUBBLE_LINE_GAP)
+
+    return y + bubble_h
+
 
 def _render_homepage_cta(output_path: Path) -> None:
-    """Final slide: homepage photo + fixed headline + body bubbles."""
+    """Final slide: homepage photo + headline bubble + review bubble + body bubble."""
     if HOMEPAGE_SLIDE_PATH.exists():
         img = _load_and_crop(HOMEPAGE_SLIDE_PATH)
     else:
@@ -132,7 +175,9 @@ def _render_homepage_cta(output_path: Path) -> None:
     headline_font = load_font(VALUE_HEADLINE_SIZE, bold=True)
     body_font = load_font(VALUE_BODY_SIZE, bold=False)
 
-    _draw_bubble(draw, HOMEPAGE_CTA_HEADLINE, headline_font, VALUE_TOP_BUBBLE_Y)
+    y = _draw_bubble(draw, HOMEPAGE_CTA_HEADLINE, headline_font, VALUE_TOP_BUBBLE_Y)
+    y += 50
+    _draw_review_bubble(draw, random.choice(REVIEWS), y)
 
     body_bh = _bubble_height(draw, HOMEPAGE_CTA_BODY, body_font)
     _draw_bubble(draw, HOMEPAGE_CTA_BODY, body_font, VALUE_BOTTOM_BUBBLE_BOTTOM - body_bh)

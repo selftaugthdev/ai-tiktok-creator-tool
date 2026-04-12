@@ -2,6 +2,7 @@
 
 import json
 import os
+import random
 import re
 from pathlib import Path
 
@@ -32,7 +33,9 @@ def generate_photo_carousel(app_name: str, topic: str, num_slides: int) -> list:
     hook_photos = [p for p in photos if p.startswith("hook/")]
     value_photos = [p for p in photos if not p.startswith("hook/")]
 
-    hook_photo_list = "\n".join(f"  - {p}" for p in hook_photos) if hook_photos else "  (none yet — pick from value photos)"
+    # Randomly pre-select the hook photo so Claude doesn't always pick the same one
+    chosen_hook_photo = random.choice(hook_photos) if hook_photos else None
+
     all_value_photos = value_photos + hook_photos  # hook photos also available for value slides
     value_photo_list = "\n".join(f"  - {p}" for p in all_value_photos)
 
@@ -40,32 +43,37 @@ def generate_photo_carousel(app_name: str, topic: str, num_slides: int) -> list:
     claude_slides = num_slides - 1
     num_value = claude_slides - 1
 
+    hook_photo_instruction = (
+        f'- "background_photo": use exactly "{chosen_hook_photo}" (already selected for you)'
+        if chosen_hook_photo
+        else '- "background_photo": pick any contextually relevant photo'
+    )
+
     prompt = f"""Create TikTok photo-overlay carousel content about "{topic}" for the app "{app_name}".
 
-Hook photos (preferred for slide 1 — woman with phone, happy/surprised reactions):
-{hook_photo_list}
-
-All available photos (use for any slide):
+All available photos (use for value slides):
 {value_photo_list}
 
 Return a JSON array of exactly {claude_slides} slide objects.
 
 Slide 1 (hook):
-- "headline": a conversational, disbelief-style scroll-stopper in the style of one of these examples (make your own variation, do not copy verbatim):
-  * "Will the weather trigger my migraine again today?"
-  * "So you mean there is an app that helps forecast migraines?"
-  * "That moment you find out there is actually an app that lets you log migraines and forecasts them accurately"
-  * "So this app provides a detailed PDF report for all my migraine triggers to give to my doctor?"
-  * "You're telling me there's an app that warns me for a migraine based on my personal triggers?"
-  The hook must feel like a real person's reaction or a question they'd actually ask. Tie it directly to "{topic}".
-- "background_photo": prefer hook photos for slide 1, but use any photo if it's a stronger contextual match
+- "headline": a conversational scroll-stopper that makes a migraine sufferer think "that's exactly what happens to me." Sounds like a real person's spoken reaction — not an ad. Choose ONE of these formats and write a fresh variation for "{topic}" — do NOT copy verbatim:
+  * Personal discovery: "I tracked 6 months of migraines and [specific pattern from topic] showed up every single time"
+  * Pattern recognition: "This is why you get a migraine every time [specific scenario tied to topic]"
+  * Disbelief/social proof: "Wait, you're telling me there's an app that actually predicted my migraine 6 hours before it hit?"
+  * POV moment: "POV: You check MigraineCast the morning of [specific scenario from topic] and it already warned you"
+  * Pain validation: "Nobody talks about [specific uncomfortable truth tied to topic] and it's ruining migraine sufferers' lives"
+  * Recognition: "If [very specific type of migraine situation tied to topic] keeps happening to you, this is why"
+  Must be specific to "{topic}" — never a generic app pitch. The more specific and recognizable, the better.
+{hook_photo_instruction}
 
 Slides 2 to {claude_slides} (value slides, {num_value} total):
-- "headline": punchy point (max 7 words, ALL CAPS encouraged)
-- "body": supporting detail (max 18 words, conversational)
+- "headline": specific, pattern-recognition point (max 7 words, ALL CAPS). Must make a migraine sufferer think "that's exactly what happens to me" — not a generic fact.
+- "body": 1 sentence in first or second person that names the exact experience ("You've probably noticed...", "Most people don't realize..."). Max 18 words. Specific details beat vague claims.
 - "background_photo": pick the single most contextually relevant photo for this slide's specific content
 
 Rules:
+- THE GOAL IS RECOGNITION, NOT EDUCATION. Urgency comes from specificity. Name exact scenarios, timeframes, and patterns — not general migraine science.
 - PHOTO MATCHING IS CRITICAL. Read every filename carefully. If a filename directly matches the slide content, always use it — it beats any generic mood match. Examples:
   * A slide about doctor reports → use "hook/MigraineCast_Report.png" or "hook/Handing_report_on_phone_to_doctor.jpg" or "hook/woman_showing_phone_with_pdf_report.jpg"
   * A slide about caffeine → use "props/coffee_cup.jpg"

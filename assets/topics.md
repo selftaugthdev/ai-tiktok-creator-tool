@@ -138,7 +138,7 @@ Check off topics as you use them.
 ## App-Specific
 
 - [ ] `"how to predict your next migraine before it hits"`
-- [ ] `"why migraine sufferers need a weather app"`
+- [X] `"why migraine sufferers need a weather app"`
 - [ ] `"how MigraineCast helps you plan around pain"`
 - [ ] `"how tracking weather data can reduce migraine frequency"`
 - [ ] `"why a generic weather app isn't enough for migraine sufferers"`
@@ -174,7 +174,7 @@ Check off topics as you use them.
 - [ ] `"Your doctor never told you this about barometric pressure and migraines"`
 - [ ] `"Your brain starts a migraine 24 hours before you feel it. Here's what it's doing"`
 - [ ] `"Every migraine sufferer has said this exact sentence. Science finally has an answer"`
-- [ ] `"The weather changed 6 hours ago. Your head already knew"`
+- [X] `"The weather changed 6 hours ago. Your head already knew"`
 
 ---
 
@@ -196,17 +196,17 @@ Check off topics as you use them.
 - [ ] `"Things That Make Migraines Worse in Spring"`
 - [ ] `"Weather Changes That Trigger Migraines"`
 - [ ] `"Hidden Triggers in Your Daily Routine"`
-- [ ] `"What Happens in Your Brain During a Migraine"`
+- [X] `"What Happens in Your Brain During a Migraine"`
 - [ ] `"Types of Migraine Attacks Explained"`
 - [ ] `"Hormones That Affect Migraine Frequency"`
 - [ ] `"Ways Sleep Impacts Your Migraines"`
 - [ ] `"Things Migraineurs Are Tired of Hearing"`
 - [ ] `"Ways Migraines Affect Your Social Life"`
 - [ ] `"Things Only Migraineurs Understand"`
-- [ ] `"Spring Activities That Can Trigger Migraines"`
+- [X] `"Spring Activities That Can Trigger Migraines"`
 - [ ] `"Things to Track in Your Migraine Diary"`
 - [ ] `"Foods That Can Help Reduce Migraine Frequency"`
 - [ ] `"Spring Scents and Smells That Trigger Migraines"`
 - [ ] `"Medications Commonly Used for Migraines"`
 - [X] `"Ways Stress Triggers Migraines"`
-- [ ] `"Things to Do Between Migraine Attacks to Stay Prepared"`
+- [X] `"Things to Do Between Migraine Attacks to Stay Prepared"`

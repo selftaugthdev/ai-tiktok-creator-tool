@@ -17,14 +17,21 @@ def generate_carousel(app_name: str, topic: str, num_slides: int = 7, style: str
 Return a JSON array of exactly {num_slides} slide objects.
 
 Slide 1 (hook) must have:
-- "headline": bold, alarming hook statement (max 8 words, ALL CAPS encouraged)
-- "body": supporting text (max 25 words, conversational)
+- "headline": scroll-stopping hook (max 8 words, ALL CAPS). The goal is to make a migraine sufferer think "that's exactly what happens to me." Choose ONE of these formulas and write a fresh variation for "{topic}" — do NOT copy verbatim:
+  * "I TRACKED [X] MONTHS OF MIGRAINES AND FOUND THIS" (personal discovery)
+  * "THIS IS WHY YOU GET A MIGRAINE EVERY TIME [specific scenario from topic]" (pattern recognition)
+  * "NOBODY WARNS YOU [uncomfortable specific truth about topic]" (pain validation)
+  * "STOP [doing common thing] IF YOU GET MIGRAINES" (pattern interrupt)
+  * "THIS IS WHY [topic-related situation] KEEPS HAPPENING TO YOU" (self-recognition)
+  * "I DIDN'T BELIEVE MIGRAINES COULD BE PREDICTED UNTIL THIS" (social proof / discovery)
+  Avoid: "DID YOU KNOW", "HERE'S WHAT", "THE TRUTH ABOUT". Must be specific to "{topic}", not generic migraine content.
+- "body": 1 sentence that makes the reader feel seen — like you lived this too (max 25 words, conversational, first or second person, NOT a definition or list)
 - "mascot_expression": one of "calm", "default", "sad", "smug", "stormy", "warning". Choose based on emotional tone.
 
 Slides 2 through {num_slides - 1} (value slides, {num_value_slides} slides) must have:
 - "headline": category or theme name (max 8 words, ALL CAPS)
 - "subtitle": short descriptor phrase for the grid below (max 6 words, title case)
-- "items": list of 4-6 objects, each with "label" (short phrase, max 4 words) and "emoji" (a single emoji character). Items must be specific, varied, and relevant to the subtitle.
+- "items": list of 4-6 objects, each with "label" (short phrase, max 4 words) and "emoji" (a single emoji character). Items must be specific, concrete, and instantly recognizable to a migraine sufferer — not clinical labels.
 - "mascot_expression": one of "calm", "default", "sad", "smug", "stormy", "warning". Choose based on emotional tone.
 
 Slide {num_slides} (CTA) must have:
@@ -33,10 +40,10 @@ Slide {num_slides} (CTA) must have:
 - "mascot_expression": must be "smug"
 
 Rules:
-- STAY ON TOPIC. Every value slide must directly address the specific situation or scenario described in the topic. If the topic is about canceling plans, items must be about handling that moment — the guilt, the communication, the recovery — NOT general migraine science or biology.
-- NEVER drift into tangentially related but off-topic content. Tips about heat/ice packs, body posture, or caffeine are off-topic if the subject is an emotional or social situation.
-- Items must be specific and non-obvious. No generic entries like "take medication", "rest", or "drink water" — assume the audience already knows those.
-- Each item should feel like something worth writing down.
+- THE GOAL IS RECOGNITION, NOT EDUCATION. Every slide must make a migraine sufferer think "that's exactly what happens to me — I need this." Urgency comes from specificity, not from general facts.
+- STAY ON TOPIC. Every value slide must directly address the exact situation in "{topic}". If the topic is about canceling plans, items cover the guilt, communication, and recovery — NOT general migraine science.
+- Items must be specific and non-obvious. No generic entries like "take medication", "rest", or "drink water."
+- Each item should feel like something a migraine sufferer would screenshot to show someone who doesn't understand them.
 - Do NOT use em-dashes (— or –) anywhere. Use commas or periods instead.
 - Only include information that is well-established in published research. Do not speculate or extrapolate.
 - Return ONLY a valid JSON array. No markdown fences, no explanation."""
@@ -51,18 +58,25 @@ Return a JSON array of exactly {num_slides} slide objects. Each object must have
 - "mascot_expression": one of "calm", "default", "sad", "smug", "stormy", "warning". Choose based on the slide's emotional tone. The last slide (CTA) must always use "smug".
 
 Slide structure:
-1. Hook slide: A bold, surprising or alarming statement about {topic} that stops the scroll. Make it feel urgent and personal.
-2-{num_slides - 1}. Value slides ({num_value_slides} slides): One specific, non-obvious tip or insight per slide. Each tip must be distinct.
+1. Hook slide (ALL CAPS headline, max 8 words): The goal is to make a migraine sufferer think "that's exactly what happens to me." Choose ONE of these formulas and write a fresh variation for "{topic}" — do NOT copy verbatim:
+   * "I TRACKED [X] MONTHS OF MIGRAINES AND FOUND THIS" (personal discovery)
+   * "THIS IS WHY YOU GET A MIGRAINE EVERY TIME [specific scenario from topic]" (pattern recognition)
+   * "NOBODY WARNS YOU [uncomfortable specific truth about topic]" (pain validation)
+   * "STOP [doing common thing] IF YOU GET MIGRAINES" (pattern interrupt)
+   * "THIS IS WHY [topic-related situation] KEEPS HAPPENING TO YOU" (self-recognition)
+   * "I DIDN'T BELIEVE MIGRAINES COULD BE PREDICTED UNTIL THIS" (social proof / discovery)
+   Avoid: "DID YOU KNOW", "HERE'S WHAT", "THE TRUTH ABOUT". Body (max 25 words) must make the reader feel seen — like you lived this — not a definition or list.
+2-{num_slides - 1}. Value slides ({num_value_slides} slides): One specific, instantly recognizable insight per slide. Each must be distinct and make the reader think "that's me."
 {num_slides}. CTA slide: Encourage users to download {app_name} on iOS. The body must end with "Download {app_name} on iOS. Link in bio. Or download at www.migrainecast.app"
 
 Copywriting rules for value slides — this is the most important part:
-- STAY ON TOPIC. Every value slide must directly address the specific situation or scenario described in the topic. If the topic is about canceling plans, tips must be about handling that moment — the guilt, the communication, the recovery, the decision-making — NOT general migraine science or biology.
-- NEVER drift into tangentially related but off-topic content. If someone asked for "tips for canceling plans", they do not want a lecture on caffeine or neck stiffness. They want tips for what to do RIGHT NOW in that situation.
-- NEVER write obvious tips. Assume the audience already knows the basics. No "take your medication", "stay hydrated", "lie in a dark room", "track your triggers" — these are things everyone has heard.
-- Every tip must feel like a revelation. Ask yourself: would a migraine sufferer stop scrolling and think "I didn't know that"? If not, pick a different angle.
-- Lead with the surprising or counterintuitive angle — the emotional truth, the social strategy, or the body mechanism. Make it feel like insider knowledge, not a doctor's pamphlet.
-- Use specific numbers, timeframes, or concrete actions where possible. Vague claims lose trust.
-- Each slide should feel complete as a standalone post.
+- THE GOAL IS RECOGNITION, NOT EDUCATION. Every slide must make a migraine sufferer think "that's exactly what happens to me — I need this." That sense of being understood is what converts, not general facts.
+- STAY ON TOPIC. Every value slide must directly address the exact situation in the topic. If the topic is about canceling plans, tips cover the guilt, the decision, the communication — NOT caffeine or sleep science.
+- NEVER drift off-topic. If someone asked about canceling plans, they do not want a lecture on neck stiffness.
+- NEVER write obvious tips. No "take your medication", "stay hydrated", "lie in a dark room", "track your triggers."
+- Use first or second person ("You've probably noticed...", "Most people with migraines don't realize..."). Make it feel personal, not clinical.
+- Use specific details: timeframes, numbers, named scenarios. "3-4 hours before a storm, pressure drops and your neck stiffens" beats "weather affects migraines."
+- Each slide should feel like something a reader would screenshot and send to someone who doesn't understand their migraines.
 
 General rules:
 - Headlines must be short and punchy — no filler words.

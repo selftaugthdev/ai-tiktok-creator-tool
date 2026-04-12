@@ -1,3 +1,5 @@
+import math
+import random
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -40,11 +42,24 @@ MC_LOGO_W = 280
 MC_LOGO_RADIUS = 52
 MC_LOGO_GAP = 40   # gap between logo and headline
 
-# Testimonial (CTA slide)
+# Testimonial / review (CTA slide)
 TESTIMONIAL_FONT_SIZE = 36
 TESTIMONIAL_PAD_X = 40
 TESTIMONIAL_PAD_Y = 22
 TESTIMONIAL_BG = (255, 200, 215)   # slightly deeper pink
+REVIEW_STAR_OUTER_R = 26   # outer radius of each star point (diameter = 52px)
+REVIEW_STAR_INNER_R = 11   # inner radius (valley between points)
+REVIEW_AUTHOR_SIZE = 30
+REVIEWS = [
+    {
+        "quote": "\u201cAll of my migraines were in line with high or medium risk days on the app.\u201d",
+        "author": "— Selen_B_D, App Store",
+    },
+    {
+        "quote": "\u201cI was sceptical at first, but the weather does have impact on my migraine, a lot more than I had ever thought possible. This app has become my daily go-to.\u201d",
+        "author": "— Winter-flowers-in-summer, App Store",
+    },
+]
 
 # Infographic constants
 INFOGRAPHIC_CELL_W = 240
@@ -200,6 +215,33 @@ def _split_sentences(text: str) -> list:
     import re
     parts = re.split(r'(?<=[.!?])\s+', text.strip())
     return [s.strip() for s in parts if s.strip()]
+
+
+def _draw_stars(
+    draw: ImageDraw.ImageDraw,
+    cx: int,
+    y: int,
+    count: int,
+    outer_r: int,
+    inner_r: int,
+    color: tuple,
+) -> None:
+    """Draw `count` filled 5-pointed star polygons horizontally centered at cx."""
+    star_diam = outer_r * 2
+    gap = 12
+    total_w = count * star_diam + (count - 1) * gap
+    x_start = cx - total_w // 2
+
+    for i in range(count):
+        sx = x_start + i * (star_diam + gap) + outer_r
+        sy = y + outer_r
+        pts = []
+        for j in range(5):
+            a_out = math.radians(-90 + j * 72)
+            pts.append((sx + outer_r * math.cos(a_out), sy + outer_r * math.sin(a_out)))
+            a_in = math.radians(-90 + j * 72 + 36)
+            pts.append((sx + inner_r * math.cos(a_in), sy + inner_r * math.sin(a_in)))
+        draw.polygon(pts, fill=color)
 
 
 def _infographic_grid_height(num_items: int, label_line_h: int = 42) -> int:
@@ -415,20 +457,24 @@ def render_slide(
                 body_sentence_heights = [_text_block_height(draw, b, body_font, 14) for b in body_sentence_blocks]
                 body_h = sum(body_sentence_heights) + BODY_SENTENCE_GAP * (len(body_sentences) - 1)
 
+        review = None
         testimonial_lines = []
         testimonial_h = 0
         testimonial_font = None
+        author_font = None
         if is_cta:
-            testimonial_text = (
-                f"\u201cThe {app_name} app (finally) helped me stop "
-                f"being blindsided by my migraines\u201d"
-            )
+            review = random.choice(REVIEWS)
             testimonial_font = load_font(TESTIMONIAL_FONT_SIZE, bold=False)
+            author_font = load_font(REVIEW_AUTHOR_SIZE, bold=False)
             testimonial_lines = _wrap_text(
-                draw, testimonial_text, testimonial_font,
+                draw, review["quote"], testimonial_font,
                 available_width - TESTIMONIAL_PAD_X * 2,
             )
-            text_h = _text_block_height(draw, testimonial_lines, testimonial_font, 12)
+            author_bbox = draw.textbbox((0, 0), review["author"], font=author_font)
+            star_h = REVIEW_STAR_OUTER_R * 2
+            author_h = author_bbox[3] - author_bbox[1]
+            quote_h = _text_block_height(draw, testimonial_lines, testimonial_font, 12)
+            text_h = star_h + 12 + quote_h + 12 + author_h
             testimonial_h = text_h + TESTIMONIAL_PAD_Y * 2
 
         # Resolve visual element — chart takes priority over illustration
@@ -481,8 +527,8 @@ def render_slide(
         y = _draw_centered_lines(draw, headline_lines, headline_font, y, COLOR_HEADLINE, line_gap=16)
         y += block_gap if not is_cta else testimonial_gap
 
-        # Testimonial (CTA slide only)
-        if is_cta and testimonial_lines:
+        # Review block (CTA slide only)
+        if is_cta and review:
             rect_x = MARGIN_X
             rect_h = testimonial_h
             draw.rounded_rectangle(
@@ -490,10 +536,16 @@ def render_slide(
                 radius=20,
                 fill=TESTIMONIAL_BG,
             )
-            _draw_centered_lines(
-                draw, testimonial_lines, testimonial_font,
-                y + TESTIMONIAL_PAD_Y, COLOR_BODY, line_gap=12,
-            )
+            inner_y = y + TESTIMONIAL_PAD_Y
+            # Stars (centered, hot pink — drawn as polygons to avoid font-glyph issues)
+            _draw_stars(draw, WIDTH // 2, inner_y, 5, REVIEW_STAR_OUTER_R, REVIEW_STAR_INNER_R, ACCENT_COLOR)
+            inner_y += REVIEW_STAR_OUTER_R * 2 + 12
+            # Quote
+            inner_y = _draw_centered_lines(draw, testimonial_lines, testimonial_font, inner_y, COLOR_BODY, line_gap=12)
+            inner_y += 12
+            # Author name
+            ab = draw.textbbox((0, 0), review["author"], font=author_font)
+            draw.text(((WIDTH - (ab[2] - ab[0])) // 2, inner_y), review["author"], font=author_font, fill=COLOR_BODY)
             y += rect_h + testimonial_gap
 
         # Visual (chart or illustration)
