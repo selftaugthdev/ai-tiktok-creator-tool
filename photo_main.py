@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from photo_renderer import configure_platform, render_photo_carousel
 from photo_script_gen import generate_photo_carousel
 from platforms import PLATFORMS
+from script_gen import generate_caption
 
 
 def parse_args() -> argparse.Namespace:
@@ -88,6 +89,15 @@ def main() -> None:
         except Exception as exc:
             print(f"  Error rendering slides: {exc}", file=sys.stderr)
             continue
+
+        print(f"[{i + 1}/{args.count}] Generating caption...")
+        try:
+            caption = generate_caption(args.app, args.topic)
+            caption_path = carousel_dir / "caption.txt"
+            caption_path.write_text(caption, encoding="utf-8")
+            print(f"    caption.txt → {caption_path}")
+        except Exception as exc:
+            print(f"  Warning: could not generate caption: {exc}", file=sys.stderr)
 
     print(f"\nDone! Carousels saved to {output_base}/")
 
