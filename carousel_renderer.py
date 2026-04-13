@@ -587,20 +587,24 @@ def render_slide(
 
     # ── App name watermark (top-left, same row as slide counter) ─────────────
     wm_text = "www.migrainecast.app" if "migrainecast" in app_name.lower() else app_name
+    is_screenshot_slide = "screenshot_path" in slide
+    wm_fill = (30, 30, 30) if is_screenshot_slide else COLOR_WATERMARK
+    wm_x = max(SLIDE_NUM_MARGIN - 20, 20) if is_screenshot_slide else SLIDE_NUM_MARGIN
     draw.text(
-        (SLIDE_NUM_MARGIN, SLIDE_NUM_MARGIN),
+        (wm_x, SLIDE_NUM_MARGIN),
         wm_text,
         font=watermark_font,
-        fill=COLOR_WATERMARK,
+        fill=wm_fill,
     )
 
     # ── Mascot (lower-left, composited on top) ───────────────────────────────
     # Only on hook (slide 1) — skip CTA (logo is there now) and value slides
+    # Skip on Instagram (shorter canvas — mascot overlaps text content)
     is_infographic_value = "items" in slide
     is_hook_or_cta = slide_index == 1
     expression = mascot_expression if mascot_expression in VALID_EXPRESSIONS else "default"
     mascot_path = MASCOT_DIR / f"mascot_{expression}.png"
-    if not is_infographic_value and is_hook_or_cta and mascot_path.exists():
+    if not is_infographic_value and is_hook_or_cta and HEIGHT >= 1700 and mascot_path.exists():
         mascot_img = Image.open(mascot_path).convert("RGBA")
         ratio = MASCOT_W / mascot_img.width
         mascot_h = int(mascot_img.height * ratio)
