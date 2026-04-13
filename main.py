@@ -3,6 +3,7 @@
 
 import argparse
 import os
+import random
 import sys
 from pathlib import Path
 
@@ -112,8 +113,12 @@ def main() -> None:
             continue
 
         # Inject app screenshot slides before the CTA (last slide)
+        _screenshot_options = [
+            Path("assets") / "MigraineCast Showing Home Page.jpg",
+            Path("assets") / "MigraineCast Showing Smart alert.jpg",
+        ]
         screenshot_slides = [
-            {"screenshot_path": str(Path("assets") / "MigraineCast Showing Home Page.jpg"), "mascot_expression": "default"},
+            {"screenshot_path": str(random.choice(_screenshot_options)), "mascot_expression": "default"},
         ]
         slides = slides[:-1] + screenshot_slides + slides[-1:]
         total_slides = len(slides)
