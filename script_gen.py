@@ -11,7 +11,73 @@ def generate_carousel(app_name: str, topic: str, num_slides: int = 7, style: str
 
     num_value_slides = num_slides - 2
 
-    if style == "infographic":
+    if style == "hybrid":
+        num_middle = num_slides - 2
+        num_reframe = max(1, round(num_middle * 0.6))
+        num_payoff = num_middle - num_reframe
+        reframe_range = f"Slides 2-{1 + num_reframe}" if num_reframe > 1 else "Slide 2"
+        payoff_range = f"Slides {2 + num_reframe}-{num_slides - 1}" if num_payoff > 1 else f"Slide {2 + num_reframe}"
+
+        prompt = f"""Create a TikTok carousel in the HYBRID format about "{topic}" for the app "{app_name}".
+
+This format has a specific emotional arc: start with pure human pain, teach the science behind it, then arrive at the solution. Never lead with the app. Never sound like an ad.
+
+Return a JSON array of exactly {num_slides} slide objects. Each object must have:
+- "headline": punchy, ALL CAPS, max 8 words
+- "body": 1-2 sentences, max 25 words
+- "mascot_expression": one of "calm", "default", "sad", "smug", "stormy", "warning"
+
+---
+
+SLIDE 1 — EMOTIONAL HOOK
+Goal: Make a migraine sufferer feel immediately, deeply seen. This is the moment they stop scrolling because it feels like you read their mind.
+- No app mention. No data. No science yet.
+- Pure identity and pain. Speak directly to the invisible burden: cancelled plans, not being believed, dreading the unknown, losing control of their own life.
+- Use second person ("you", "your"). Write as if you have migraines too.
+- Headline: a raw, specific emotional truth — not a question, not a generic hook. Something they have felt but never seen written down.
+- Body: double down on the feeling. Make them feel understood, not informed.
+- mascot_expression: "sad" or "stormy" (empathy, not alarm)
+
+---
+
+{reframe_range} — REFRAME ({num_reframe} slide{"s" if num_reframe > 1 else ""})
+Goal: Transition from emotional to educational. Explain the science or pattern that causes what they just felt on slide 1. The tone shifts from empathetic to empowering — the reader goes from "I feel this" to "now I understand why."
+- Introduce the mechanism: barometric pressure drops, the trigeminovascular system, the prodrome phase, pattern recognition across time.
+- Tie every scientific point directly back to the lived experience described on slide 1. Never explain in the abstract.
+- Each slide: one clear mechanism or insight. Use specific numbers and timeframes where possible ("pressure can drop 10 hPa in under 3 hours", "your brain detects changes 24-48 hours before the headache hits").
+- Language: plain, conversational. Write like a fellow sufferer who has done their homework, not a medical pamphlet.
+- mascot_expression: "default" or "calm" (curious, thoughtful tone)
+
+---
+
+{payoff_range} — PAYOFF ({num_payoff} slide{"s" if num_payoff > 1 else ""})
+Goal: Connect the insight to taking back control. This is where {app_name} earns its place — as the logical next step, not a sales pitch.
+- Frame it as: "now that you understand why this happens, here is how you can stop being blindsided."
+- {app_name} should feel like the tool that makes the science from the reframe slides actionable. Never describe features — describe the change in the reader's life.
+- Tone: empowering, forward-looking. The reader should feel capable, not sold to.
+- The app name may appear here, but only in service of the reader's outcome.
+- mascot_expression: "smug" or "calm" (confident, reassuring)
+
+---
+
+SLIDE {num_slides} — CTA
+- Headline: a confident, outcome-focused call to action (max 8 words)
+- Body: must end with "Download {app_name} on iOS. Link in bio. Or download at www.migrainecast.app"
+- mascot_expression: must be "smug"
+
+---
+
+TONE RULES — read these carefully:
+- 40% emotional, 40% educational, 20% solution. This ratio must be felt across the carousel as a whole.
+- Never open with the app. Never use clinical or corporate language. No "game-changer", "empower", "unlock", "journey", "dive into".
+- Write every slide as if spoken by someone who has migraines and has done the research themselves.
+- Value slides should feel like something a reader would screenshot and send to someone who doesn't understand their condition.
+- Do NOT use em-dashes (— or –) anywhere. Use commas or periods instead.
+- Only include facts that are well-established in published research. Do not speculate.
+- Return ONLY a valid JSON array. No markdown fences, no explanation."""
+        max_tokens = 1024
+
+    elif style == "infographic":
         prompt = f"""Create TikTok carousel slide content about "{topic}" for the app "{app_name}".
 
 Return a JSON array of exactly {num_slides} slide objects.

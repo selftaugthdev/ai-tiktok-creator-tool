@@ -42,9 +42,9 @@ Examples:
     )
     parser.add_argument(
         "--style",
-        choices=["regular", "infographic"],
+        choices=["regular", "infographic", "hybrid"],
         default="regular",
-        help="Slide style: 'regular' (default) or 'infographic' (emoji grid for value slides).",
+        help="Slide style: 'regular' (default), 'infographic' (emoji grid), or 'hybrid' (emotional hook + educational payoff arc).",
     )
     parser.add_argument(
         "--platform",
@@ -79,7 +79,7 @@ def main() -> None:
 
     app_slug = args.app.replace(" ", "_")
     topic_slug = args.topic.lower().replace(" ", "-")
-    style_folder = "infographic" if args.style == "infographic" else "regular"
+    style_folder = args.style  # "regular", "infographic", or "hybrid"
     output_base = Path("output") / "to-upload" / app_slug / args.platform / style_folder
 
     # Find the next carousel number so existing ones are never overwritten.
