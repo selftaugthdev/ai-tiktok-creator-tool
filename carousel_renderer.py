@@ -15,7 +15,7 @@ BG_COLOR = (250, 218, 221)      # #FADADD soft pink
 ACCENT_COLOR = (255, 107, 157)  # #FF6B9D hot pink
 COLOR_HEADLINE = (45, 45, 45)   # #2D2D2D
 COLOR_BODY = (85, 85, 85)       # #555555
-COLOR_WATERMARK = (170, 170, 170)
+COLOR_WATERMARK = (255, 107, 157)  # #FF6B9D hot pink
 
 # Layout constants
 MARGIN_X = 80

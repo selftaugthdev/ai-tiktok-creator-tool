@@ -144,8 +144,8 @@ function buildHtml(topic, statements, platform = 'tiktok') {
       bottom: 32px;
       right: 96px;
       font-size: 28px;
-      font-weight: 400;
-      color: ${COLORS.watermark};
+      font-weight: 700;
+      color: ${COLORS.accent};
     }
   </style>
 </head>
