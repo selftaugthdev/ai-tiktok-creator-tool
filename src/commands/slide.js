@@ -211,10 +211,22 @@ async function renderSlide(html, outputPath, platform = 'tiktok') {
   }
 }
 
+function nextOutputDir(baseDir, prefix) {
+  fs.mkdirSync(baseDir, { recursive: true });
+  const existing = fs.readdirSync(baseDir)
+    .filter(n => n.startsWith(prefix + '_'))
+    .map(n => parseInt(n.split('_')[1], 10))
+    .filter(n => !isNaN(n));
+  const next = existing.length ? Math.max(...existing) + 1 : 1;
+  return path.join(baseDir, `${prefix}_${next}`);
+}
+
 async function runSlide({ topic, output, platform = 'tiktok' }) {
-  fs.mkdirSync(output, { recursive: true });
-  const outputPath = path.join(output, 'slide.png');
-  const captionPath = path.join(output, 'caption.txt');
+  const topicSlug = topic.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  const runDir = nextOutputDir(output, topicSlug);
+  fs.mkdirSync(runDir, { recursive: true });
+  const outputPath = path.join(runDir, 'slide.png');
+  const captionPath = path.join(runDir, 'caption.txt');
 
   console.log(`\nGenerating statements for: "${topic}" [${platform}]`);
   const statements = await generateStatements(topic);
@@ -228,7 +240,7 @@ async function runSlide({ topic, output, platform = 'tiktok' }) {
   fs.writeFileSync(captionPath, caption, 'utf8');
   console.log(`    caption.txt → ${captionPath}`);
 
-  console.log(`\nDone. Saved to: ${outputPath}\n`);
+  console.log(`\nDone. Saved to: ${runDir}\n`);
 }
 
 module.exports = { runSlide };
