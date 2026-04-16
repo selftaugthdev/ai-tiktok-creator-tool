@@ -214,4 +214,6 @@ Rules:
         messages=[{"role": "user", "content": prompt}],
     )
 
-    return message.content[0].text.strip()
+    caption = message.content[0].text.strip()
+    cta = "Stay ahead of your migraines with the MigraineCast app, link in Bio, free to download in the App store or at www.migrainecast.app"
+    return f"{caption}\n\n{cta}"
