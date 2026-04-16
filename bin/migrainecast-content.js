@@ -16,12 +16,17 @@ program
 
 program
   .command('slide')
-  .description('Generate a single TikTok photo post slide (1080x1920 PNG) with emotional statements.')
+  .description('Generate a single photo post slide (1080x1920 TikTok or 1080x1350 Instagram PNG).')
   .requiredOption('--topic <topic>', 'Headline shown at the top of the slide.')
   .requiredOption('--output <dir>', 'Output directory — slide.png will be saved here.')
+  .option('--platform <platform>', 'Target platform: tiktok (default) or instagram.', 'tiktok')
   .action(async (opts) => {
     if (!process.env.ANTHROPIC_API_KEY) {
       console.error('Error: ANTHROPIC_API_KEY is not set. Add it to your .env file.');
+      process.exit(1);
+    }
+    if (!['tiktok', 'instagram'].includes(opts.platform)) {
+      console.error('Error: --platform must be tiktok or instagram.');
       process.exit(1);
     }
     await runSlide(opts);
@@ -29,12 +34,17 @@ program
 
 program
   .command('grid')
-  .description('Generate a "N Things About X" infographic (1080x1920 PNG) with a 3-column emoji grid.')
+  .description('Generate a "N Things About X" infographic (1080x1920 TikTok or 1080x1350 Instagram PNG).')
   .requiredOption('--topic <topic>', 'Topic for the infographic (e.g. "migraine trigger foods").')
   .requiredOption('--output <dir>', 'Output directory — infographic.png will be saved here.')
+  .option('--platform <platform>', 'Target platform: tiktok (default) or instagram.', 'tiktok')
   .action(async (opts) => {
     if (!process.env.ANTHROPIC_API_KEY) {
       console.error('Error: ANTHROPIC_API_KEY is not set. Add it to your .env file.');
+      process.exit(1);
+    }
+    if (!['tiktok', 'instagram'].includes(opts.platform)) {
+      console.error('Error: --platform must be tiktok or instagram.');
       process.exit(1);
     }
     await runGrid(opts);

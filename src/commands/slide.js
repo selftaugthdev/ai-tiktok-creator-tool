@@ -13,6 +13,27 @@ const COLORS = {
   watermark: '#AAAAAA',
 };
 
+const PLATFORMS = {
+  tiktok: {
+    width: 1080,
+    height: 1920,
+    paddingTop: 100,
+    paddingBottom: 80,
+    h1Size: 86,
+    statementSize: 47,
+    safeBottom: 1840,
+  },
+  instagram: {
+    width: 1080,
+    height: 1350,
+    paddingTop: 70,
+    paddingBottom: 60,
+    h1Size: 76,
+    statementSize: 42,
+    safeBottom: 1290,
+  },
+};
+
 async function generateStatements(topic) {
   const client = new Anthropic();
 
@@ -48,7 +69,8 @@ Rules for both styles:
   return statements;
 }
 
-function buildHtml(topic, statements) {
+function buildHtml(topic, statements, platform = 'tiktok') {
+  const p = PLATFORMS[platform] || PLATFORMS.tiktok;
   const statementItems = statements
     .map((s) => `<p class="statement">${escapeHtml(s)}</p>`)
     .join('\n    ');
@@ -64,8 +86,8 @@ function buildHtml(topic, statements) {
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     html, body {
-      width: 1080px;
-      height: 1920px;
+      width: ${p.width}px;
+      height: ${p.height}px;
       overflow: hidden;
       background: ${COLORS.bg};
     }
@@ -73,14 +95,14 @@ function buildHtml(topic, statements) {
     body {
       display: flex;
       flex-direction: column;
-      padding: 100px 96px 80px;
+      padding: ${p.paddingTop}px 96px ${p.paddingBottom}px;
       position: relative;
       font-family: 'Playfair Display', Georgia, serif;
       color: ${COLORS.text};
     }
 
     h1 {
-      font-size: 86px;
+      font-size: ${p.h1Size}px;
       font-weight: 900;
       line-height: 1.1;
       text-align: center;
@@ -98,7 +120,7 @@ function buildHtml(topic, statements) {
     }
 
     .statement {
-      font-size: 47px;
+      font-size: ${p.statementSize}px;
       font-weight: 700;
       line-height: 1.35;
       text-align: left;
@@ -146,7 +168,8 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
-async function renderSlide(html, outputPath) {
+async function renderSlide(html, outputPath, platform = 'tiktok') {
+  const p = PLATFORMS[platform] || PLATFORMS.tiktok;
   const browser = await puppeteer.launch({
     headless: 'new',
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
@@ -154,24 +177,22 @@ async function renderSlide(html, outputPath) {
 
   try {
     const page = await browser.newPage();
-    await page.setViewport({ width: 1080, height: 1920, deviceScaleFactor: 1 });
+    await page.setViewport({ width: p.width, height: p.height, deviceScaleFactor: 1 });
     await page.setContent(html, { waitUntil: 'networkidle2' });
 
     // Auto-scale fonts down until the last statement fits within the slide
-    await page.evaluate(() => {
+    await page.evaluate((safeBottom, initH, initS) => {
       const headline = document.querySelector('h1');
       const items = document.querySelectorAll('.statement');
-      const SAFE_BOTTOM = 1840; // bottom of usable area (clears watermark)
 
-      let hSize = 86;
-      let sSize = 47;
+      let hSize = initH;
+      let sSize = initS;
 
       for (let i = 0; i < 60; i++) {
         const last = document.querySelector('.statement:last-child');
         if (!last) break;
-        if (last.getBoundingClientRect().bottom <= SAFE_BOTTOM) break;
+        if (last.getBoundingClientRect().bottom <= safeBottom) break;
 
-        // Scale statements first, then headline if needed
         if (sSize > 28) {
           sSize -= 1;
           items.forEach(el => { el.style.fontSize = sSize + 'px'; });
@@ -182,26 +203,26 @@ async function renderSlide(html, outputPath) {
           break;
         }
       }
-    });
+    }, p.safeBottom, p.h1Size, p.statementSize);
 
-    await page.screenshot({ path: outputPath, type: 'png', clip: { x: 0, y: 0, width: 1080, height: 1920 } });
+    await page.screenshot({ path: outputPath, type: 'png', clip: { x: 0, y: 0, width: p.width, height: p.height } });
   } finally {
     await browser.close();
   }
 }
 
-async function runSlide({ topic, output }) {
+async function runSlide({ topic, output, platform = 'tiktok' }) {
   fs.mkdirSync(output, { recursive: true });
   const outputPath = path.join(output, 'slide.png');
   const captionPath = path.join(output, 'caption.txt');
 
-  console.log(`\nGenerating statements for: "${topic}"`);
+  console.log(`\nGenerating statements for: "${topic}" [${platform}]`);
   const statements = await generateStatements(topic);
   console.log(`  ${statements.length} statements generated.`);
 
   console.log('Rendering slide...');
-  const html = buildHtml(topic, statements);
-  await renderSlide(html, outputPath);
+  const html = buildHtml(topic, statements, platform);
+  await renderSlide(html, outputPath, platform);
 
   const caption = [topic, '', ...statements, '', 'Stay ahead of your migraines with the MigraineCast app, download for free in the appstore or at www.migrainecast.app'].join('\n');
   fs.writeFileSync(captionPath, caption, 'utf8');

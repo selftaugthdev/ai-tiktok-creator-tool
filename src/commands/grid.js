@@ -13,6 +13,25 @@ const COLORS = {
   watermark: '#AAAAAA',
 };
 
+const PLATFORMS = {
+  tiktok: {
+    width: 1080,
+    height: 1920,
+    paddingTop: 72,
+    paddingBottom: 80,
+    bigNumberSize: 320,
+    headerGap: 60,
+  },
+  instagram: {
+    width: 1080,
+    height: 1350,
+    paddingTop: 50,
+    paddingBottom: 60,
+    bigNumberSize: 220,
+    headerGap: 40,
+  },
+};
+
 async function generateGridData(topic) {
   const client = new Anthropic();
 
@@ -61,8 +80,9 @@ Rules:
   return data;
 }
 
-function buildHtml(data) {
+function buildHtml(data, platform = 'tiktok') {
   const { number, title, items } = data;
+  const p = PLATFORMS[platform] || PLATFORMS.tiktok;
 
   const gridItems = items
     .map(
@@ -85,8 +105,8 @@ function buildHtml(data) {
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     html, body {
-      width: 1080px;
-      height: 1920px;
+      width: ${p.width}px;
+      height: ${p.height}px;
       overflow: hidden;
       background: ${COLORS.bg};
       font-family: 'Inter', Arial, sans-serif;
@@ -96,7 +116,7 @@ function buildHtml(data) {
     body {
       display: flex;
       flex-direction: column;
-      padding: 72px 80px 80px;
+      padding: ${p.paddingTop}px 80px ${p.paddingBottom}px;
       position: relative;
     }
 
@@ -105,11 +125,11 @@ function buildHtml(data) {
       display: flex;
       align-items: flex-start;
       gap: 32px;
-      margin-bottom: 60px;
+      margin-bottom: ${p.headerGap}px;
     }
 
     .big-number {
-      font-size: 320px;
+      font-size: ${p.bigNumberSize}px;
       font-weight: 900;
       line-height: 0.88;
       color: ${COLORS.accent};
@@ -208,7 +228,8 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
-async function renderGrid(html, outputPath) {
+async function renderGrid(html, outputPath, platform = 'tiktok') {
+  const { width, height } = PLATFORMS[platform] || PLATFORMS.tiktok;
   const browser = await puppeteer.launch({
     headless: 'new',
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
@@ -216,26 +237,26 @@ async function renderGrid(html, outputPath) {
 
   try {
     const page = await browser.newPage();
-    await page.setViewport({ width: 1080, height: 1920, deviceScaleFactor: 1 });
+    await page.setViewport({ width, height, deviceScaleFactor: 1 });
     await page.setContent(html, { waitUntil: 'networkidle2' });
-    await page.screenshot({ path: outputPath, type: 'png', clip: { x: 0, y: 0, width: 1080, height: 1920 } });
+    await page.screenshot({ path: outputPath, type: 'png', clip: { x: 0, y: 0, width, height } });
   } finally {
     await browser.close();
   }
 }
 
-async function runGrid({ topic, output }) {
+async function runGrid({ topic, output, platform = 'tiktok' }) {
   fs.mkdirSync(output, { recursive: true });
   const outputPath = path.join(output, 'infographic.png');
   const captionPath = path.join(output, 'caption.txt');
 
-  console.log(`\nGenerating grid data for: "${topic}"`);
+  console.log(`\nGenerating grid data for: "${topic}" [${platform}]`);
   const data = await generateGridData(topic);
   console.log(`  ${data.number} items — "${data.title}"`);
 
   console.log('Rendering infographic...');
-  const html = buildHtml(data);
-  await renderGrid(html, outputPath);
+  const html = buildHtml(data, platform);
+  await renderGrid(html, outputPath, platform);
 
   const itemLines = data.items.map(({ emoji, label }) => `${emoji} ${label}`);
   const caption = [
