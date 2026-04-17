@@ -86,6 +86,24 @@ function findPngs(folder) {
     .map(f => path.join(folder, f));
 }
 
+/** Move a folder to its 'scheduled' / 'uploaded' equivalent after posting. */
+function moveToScheduled(folder) {
+  const abs = path.resolve(folder);
+
+  let dest;
+  if (abs.includes(`${path.sep}to_upload${path.sep}`)) {
+    dest = abs.replace(`${path.sep}to_upload${path.sep}`, `${path.sep}scheduled${path.sep}`);
+  } else if (abs.includes(`${path.sep}to-upload${path.sep}`)) {
+    dest = abs.replace(`${path.sep}to-upload${path.sep}`, `${path.sep}uploaded${path.sep}`);
+  } else {
+    return; // unknown structure — skip move
+  }
+
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.renameSync(abs, dest);
+  console.log(`\nMoved to: ${path.relative(process.cwd(), dest)}`);
+}
+
 /** Two-step Post Bridge media upload. Returns media_id. */
 async function uploadFile(filePath) {
   const stats    = fs.statSync(filePath);
@@ -136,6 +154,7 @@ program
   .description('Schedule a generated output folder to Instagram and TikTok via Post Bridge.')
   .requiredOption('--folder <path>', 'Path to the generated output folder (must contain a caption.txt and PNG file(s)).')
   .option('--schedule <datetime>', 'ISO 8601 datetime to schedule (e.g. 2026-04-19T09:00:00Z). Omit to use Post Bridge auto-queue.')
+  .option('--now', 'Post immediately instead of queuing.')
   .option('--tiktok-only', 'Only post to TikTok.')
   .option('--instagram-only', 'Only post to Instagram.')
   .action(async (opts) => {
@@ -182,9 +201,11 @@ program
       console.log(` ✓ (${id})`);
     }
 
-    const scheduling = opts.schedule
-      ? { scheduled_at: opts.schedule }
-      : { use_queue: true };
+    const scheduling = opts.now
+      ? { scheduled_at: new Date().toISOString() }
+      : opts.schedule
+        ? { scheduled_at: opts.schedule }
+        : { use_queue: true };
 
     // ── TikTok post ───────────────────────────────────────────────────────────
     if (!opts.instagramOnly) {
@@ -231,8 +252,10 @@ program
       console.log(` ✓ (post id: ${igPost.id})`);
     }
 
-    const when = opts.schedule || 'next queue slot';
-    console.log(`\nDone! Scheduled for: ${when}\n`);
+    const when = opts.now ? 'now (immediate)' : opts.schedule || 'next queue slot';
+    console.log(`\nDone! Scheduled for: ${when}`);
+
+    moveToScheduled(folder);
   });
 
 program.parse(process.argv);

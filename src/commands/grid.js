@@ -246,14 +246,20 @@ async function renderGrid(html, outputPath, platform = 'tiktok') {
 }
 
 function nextOutputDir(baseDir, prefix) {
-  fs.mkdirSync(baseDir, { recursive: true });
-  const existing = fs.readdirSync(baseDir)
-    .filter(n => n.startsWith(prefix + '_'))
-    .map(n => parseInt(n.split('_')[1], 10))
-    .filter(n => !isNaN(n));
+  const toUploadDir = path.join(baseDir, 'to_upload');
+  const scheduledDir = path.join(baseDir, 'scheduled');
+  fs.mkdirSync(toUploadDir, { recursive: true });
+
+  const numsIn = (dir) => {
+    if (!fs.existsSync(dir)) return [];
+    return fs.readdirSync(dir)
+      .filter(n => n.startsWith(prefix + '_'))
+      .map(n => parseInt(n.split('_').pop(), 10))
+      .filter(n => !isNaN(n));
+  };
+  const existing = [...numsIn(toUploadDir), ...numsIn(scheduledDir)];
   const next = existing.length ? Math.max(...existing) + 1 : 1;
-  const slug = prefix.replace(/\s+/g, '-').toLowerCase();
-  return path.join(baseDir, `${slug}_${next}`);
+  return path.join(toUploadDir, `${prefix}_${next}`);
 }
 
 async function runGrid({ topic, output, platform = 'tiktok' }) {
