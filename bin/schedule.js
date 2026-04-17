@@ -26,6 +26,9 @@ const API = 'https://api.post-bridge.com';
 // ── TikTok fixed hashtags (always the same 5) ────────────────────────────────
 const TIKTOK_HASHTAGS = '#migraine #migrainerelief #migraineawareness #migrainewarrior #chronicmigraine';
 
+// ── Default Instagram hashtags (used when caption has no HASHTAGS: section) ──
+const INSTAGRAM_DEFAULT_HASHTAGS = '#migraine #migrainelife #migrainerelief #migrainetriggers #migraineawareness #MigraineCast #chronicmigraine #migrainewarrior #headacherelief #migrainetips #weathermigraine #migrainesupport';
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function apiHeaders() {
@@ -35,25 +38,44 @@ function apiHeaders() {
   };
 }
 
-/** Parse caption.txt into { title, description, hashtags, cta } */
+/** Parse caption.txt into { title, description, hashtags, cta }.
+ *
+ * Handles two formats:
+ *  - Labeled (Python carousels): TITLE: / DESCRIPTION: / HASHTAGS: / CTA
+ *  - Plain (JS slides/grids):    first line = title, middle = content, last = CTA
+ */
 function parseCaption(text) {
   // Strip em-dashes just in case
   text = text.replace(/[—–]/g, ',');
 
-  const titleMatch       = text.match(/TITLE:\n([\s\S]*?)\n\nDESCRIPTION:/);
-  const descriptionMatch = text.match(/DESCRIPTION:\n([\s\S]*?)\n\nHASHTAGS:/);
-  const hashtagsMatch    = text.match(/HASHTAGS:\n([\s\S]*?)(?:\n\n|$)/);
-
-  // CTA is always the last non-empty paragraph
   const paragraphs = text.split(/\n\n+/).map(p => p.trim()).filter(Boolean);
-  const cta = paragraphs[paragraphs.length - 1].startsWith('Stay ahead') ? paragraphs[paragraphs.length - 1] : '';
+  const cta = paragraphs[paragraphs.length - 1].startsWith('Stay ahead')
+    ? paragraphs[paragraphs.length - 1]
+    : '';
 
-  return {
-    title:       titleMatch       ? titleMatch[1].trim()       : '',
-    description: descriptionMatch ? descriptionMatch[1].trim() : '',
-    hashtags:    hashtagsMatch    ? hashtagsMatch[1].trim()    : '',
-    cta,
-  };
+  // ── Labeled format ────────────────────────────────────────────────────────
+  if (text.includes('TITLE:') && text.includes('DESCRIPTION:')) {
+    const titleMatch       = text.match(/TITLE:\n([\s\S]*?)\n\nDESCRIPTION:/);
+    const descriptionMatch = text.match(/DESCRIPTION:\n([\s\S]*?)\n\nHASHTAGS:/);
+    const hashtagsMatch    = text.match(/HASHTAGS:\n([\s\S]*?)(?:\n\nStay ahead|\n\n$|$)/);
+    return {
+      title:       titleMatch       ? titleMatch[1].trim()       : '',
+      description: descriptionMatch ? descriptionMatch[1].trim() : '',
+      hashtags:    hashtagsMatch    ? hashtagsMatch[1].trim()    : '',
+      cta,
+    };
+  }
+
+  // ── Plain format (JS slide/grid) ──────────────────────────────────────────
+  // First paragraph = title, last = CTA, everything in between = description
+  const contentParagraphs = cta
+    ? paragraphs.slice(0, -1)   // drop CTA
+    : paragraphs;
+
+  const title       = contentParagraphs[0] || '';
+  const description = contentParagraphs.slice(1).join('\n\n');
+
+  return { title, description, hashtags: '', cta };
 }
 
 /** Find all PNG files in a folder (sorted so slide_01 comes before slide_02). */
@@ -189,7 +211,8 @@ program
 
     // ── Instagram post ────────────────────────────────────────────────────────
     if (!opts.tiktokOnly) {
-      const igCaption = [description, cta, hashtags].filter(Boolean).join('\n\n');
+      const igHashtags = hashtags || INSTAGRAM_DEFAULT_HASHTAGS;
+      const igCaption = [description, cta, igHashtags].filter(Boolean).join('\n\n');
 
       const igPayload = {
         caption:         igCaption,
