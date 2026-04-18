@@ -4,6 +4,9 @@
 # Generated output
 output/
 
+# Pexels downloaded cache (auto-fetched, not tracked)
+photos/pexels_cache/
+
 # Python
 __pycache__/
 *.pyc

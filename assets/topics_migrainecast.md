@@ -9,7 +9,7 @@ Check off topics as you use them.
 
 - [ ] `"how barometric pressure triggers migraines"`
 - [ ] `"weather patterns that cause headaches"`
-- [ ] `"the science behind storm headaches"`
+- [x] `"the science behind storm headaches"`
 - [ ] `"why temperature changes trigger migraines"`
 - [ ] `"humidity and migraine connection"`
 - [ ] `"what happens in your brain during a migraine"`
@@ -86,8 +86,8 @@ Check off topics as you use them.
 - [ ] `"travel tips for people who get weather-triggered migraines"`
 - [ ] `"how to reduce stress-related migraine triggers"`
 - [ ] `"the best exercises for migraine sufferers"`
-- [ ] `"what to eat and avoid on a high-risk weather day"`
-- [ ] `"how to use a migraine diary effectively"`
+- [X] `"what to eat and avoid on a high-risk weather day"`
+- [X] `"how to use a migraine diary effectively"`
 - [ ] `"rescue medication tips for migraine attacks"`
 - [x ] `"how to create a low-trigger environment at home"`
 - [x ] `"how to wind down before bed to prevent morning migraines"`
@@ -101,7 +101,7 @@ Check off topics as you use them.
 - [ ] `"Spring isn't just beautiful. For migraine sufferers, it's the hardest season of the year."`
 - [ ] `"The invisible symptoms nobody believes — until they get a migraine themselves."`
 - [ ] `"What your brain is doing in the 24 hours before a migraine hits."`
-- [ ] `"You've lost hundreds of days to migraines. Here's what was actually happening in your brain."`
+- [X] `"You've lost hundreds of days to migraines. Here's what was actually happening in your brain."`
 - [X] `"Why spring rain hits migraine sufferers harder than any other season."`
 - [ ] `"The 5 stages of a weather migraine. You'll recognise every single one."`
 
@@ -111,27 +111,27 @@ Check off topics as you use them.
 - [ ] `"things migraine sufferers wish people understood"`
 - [X] `"how migraines affect daily life"`
 - [ ] `"the emotional toll of cancelling plans due to migraines"`
-- [ ] `"how to explain your migraines to people who don't get it"`
+- [X] `"how to explain your migraines to people who don't get it"`
 - [ ] `"migraine guilt — why sufferers feel bad for being in pain"`
-- [ ] `"how chronic migraines affect relationships"`
+- [X] `"how chronic migraines affect relationships"`
 - [ ] `"the anxiety of never knowing when the next migraine hits"`
-- [ ] `"how to advocate for yourself at the doctor's office"`
+- [X] `"how to advocate for yourself at the doctor's office"`
 - [ ] `"what migraine loneliness feels like"`
 - [ ] `"why migraine sufferers are often misunderstood at work"`
-- [ ] `"how to support a loved one who has migraines"`
+- [X] `"how to support a loved one who has migraines"`
 - [ ] `"stories migraine sufferers can relate to"`
 - [ ] `"the grief of losing days to migraine attacks"`
 - [ ] `"how migraines affect mental health long-term"`
-- [ ] `"building a life around an unpredictable condition"`
+- [X] `"building a life around an unpredictable condition"`
 - [ ] `"what migraine acceptance looks like"`
 - [ ] `"finding community as a chronic migraine sufferer"`
 - [X] `"how to stay positive when migraines feel out of control"`
 - [X] `"the invisible disability of chronic migraines"`
 - [ ] `"what it feels like when treatment finally works"`
 - [ ] `"how migraine sufferers adapt their lifestyle"`
-- [ ] `"the relief of finally having a diagnosis"`
+- [X] `"the relief of finally having a diagnosis"`
 - [ ] `"migraine moments that only sufferers understand"`
-- [ ] `"how migraines shape identity and resilience"`
+- [X] `"how migraines shape identity and resilience"`
 
 ---
 
@@ -141,7 +141,7 @@ Check off topics as you use them.
 - [X] `"why migraine sufferers need a weather app"`
 - [ ] `"how MigraineCast helps you plan around pain"`
 - [ ] `"how tracking weather data can reduce migraine frequency"`
-- [ ] `"why a generic weather app isn't enough for migraine sufferers"`
+- [-] `"why a generic weather app isn't enough for migraine sufferers"`
 - [ ] `"how MigraineCast reads barometric pressure for you"`
 - [ ] `"plan your week around your migraine risk with MigraineCast"`
 - [ ] `"how MigraineCast turns weather data into personal alerts"`
@@ -184,29 +184,61 @@ Check off topics as you use them.
 - [X] `"Warning Signs a Migraine Is Coming"`
 - [X] `"Things That Make Migraines Worse"`
 - [X] `"Migraine Relief Methods That Actually Work"`
-- [X] `"Types of Migraine Attacks"`
+- [-] `"Types of Migraine Attacks"`
 - [ ] `"Surprising Migraine Triggers"`
 - [ ] `"Things Migraineurs Wish You Understood"`
-- [ ] `"Migraine Symptoms Beyond the Headache"`
-- [ ] `"Daily Habits That Help Prevent Migraines"`
-- [ ] `"Questions to Ask Your Doctor About Migraines"`
-- [ ] `"Things to Keep in Your Migraine Emergency Kit"`
-- [ ] `"Ways to Shorten a Migraine Attack"`
+- [-] `"Migraine Symptoms Beyond the Headache"`
+- [-] `"Daily Habits That Help Prevent Migraines"`
+- [-] `"Questions to Ask Your Doctor About Migraines"`
+- [-] `"Things to Keep in Your Migraine Emergency Kit"`
+- [-] `"Ways to Shorten a Migraine Attack"`
 - [X] `"Surprising Spring Migraine Triggers"`
-- [ ] `"Things That Make Migraines Worse in Spring"`
-- [ ] `"Weather Changes That Trigger Migraines"`
-- [ ] `"Hidden Triggers in Your Daily Routine"`
+- [-] `"Things That Make Migraines Worse in Spring"`
+- [-] `"Weather Changes That Trigger Migraines"`
+- [-] `"Hidden Triggers in Your Daily Routine"`
 - [X] `"What Happens in Your Brain During a Migraine"`
-- [ ] `"Types of Migraine Attacks Explained"`
-- [ ] `"Hormones That Affect Migraine Frequency"`
-- [ ] `"Ways Sleep Impacts Your Migraines"`
+- [-] `"Types of Migraine Attacks Explained"`
+- [-] `"Hormones That Affect Migraine Frequency"`
+- [-] `"Ways Sleep Impacts Your Migraines"`
 - [ ] `"Things Migraineurs Are Tired of Hearing"`
-- [ ] `"Ways Migraines Affect Your Social Life"`
+- [-] `"Ways Migraines Affect Your Social Life"`
 - [ ] `"Things Only Migraineurs Understand"`
 - [X] `"Spring Activities That Can Trigger Migraines"`
-- [ ] `"Things to Track in Your Migraine Diary"`
+- [-] `"Things to Track in Your Migraine Diary"`
 - [ ] `"Foods That Can Help Reduce Migraine Frequency"`
 - [ ] `"Spring Scents and Smells That Trigger Migraines"`
-- [ ] `"Medications Commonly Used for Migraines"`
+- [-] `"Medications Commonly Used for Migraines"`
 - [X] `"Ways Stress Triggers Migraines"`
 - [X] `"Things to Do Between Migraine Attacks to Stay Prepared"`
+
+## Emotional/educational
+- [X] `"No one believes you — but your barometric pressure data does"`
+- [X] `"You cancelled again. Here's what your body was actually reacting to"`
+- [X] `"The invisible thing that ruins your plans has a name: pressure drop"`
+- [X] `"She's always sick. Actually, she's always right about the weather"`
+- [X] `"You're not dramatic. Your nervous system detected a storm 12 hours early"`
+- [X] `"The worst part isn't the pain — it's not knowing when the next one comes"`
+- [ ] `"Everyone else feels fine. You feel the storm before it arrives"`
+- [ ] `"You've been tracking your migraines wrong — and it's not your fault"`
+- [ ] `"Lying in a dark room again. This time I knew it was coming"`
+- [ ] `"Your friends don't get it. The forecast does"`
+- [ ] `"I used to cancel plans and apologize. Now I cancel plans and explain why"`
+- [ ] `"The thing about migraines no one tells you: they follow a pattern"`
+- [ ] `"You've had this migraine 3 times this month. They weren't random"`
+- [ ] `"It's just a headache. No — it started when the pressure dropped 8 hours ago"`
+- [ ] `"The invisible illness that responds to weather forecasts"`
+- [ ] `"I stopped being surprised by my migraines when I started watching the sky"`
+- [ ] `"Nobody sees it coming. Except the barometer — and now you"`
+- [ ] `"You're not broken. You're barometrically sensitive"`
+- [ ] `"The migraine diary that actually tells you something useful"`
+- [ ] `"Every migraine I've had this year had one thing in common"`
+- [ ] `"Your body isn't betraying you. It's reacting to something real"`
+- [ ] `"I used to think stress caused my migraines. Then I checked the weather data"`
+- [ ] `"The pattern I found after 6 months of migraine logs will shock you"`
+- [ ] `"Living with migraines means grieving plans you haven't cancelled yet"`
+- [ ] `"You feel it before the rain. That's not anxiety — that's a real physiological response"`
+- [ ] `"What if your next migraine was predictable 24 hours in advance?"`
+- [ ] `"The thing about being a migraine sufferer that nobody talks about"`
+- [ ] `"I spent years thinking I was weak. Turns out I was weather-sensitive"`
+- [ ] `"You shouldn't have to explain yourself. But here's the science if you do"`
+- [ ] `"The day I stopped dreading migraines and started forecasting them"`

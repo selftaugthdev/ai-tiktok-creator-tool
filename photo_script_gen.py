@@ -104,3 +104,63 @@ Rules:
         raise ValueError(f"Expected {claude_slides} slides, got {len(slides)}.")
 
     return slides
+
+
+def generate_photo_carousel_pexels(app_name: str, topic: str, num_slides: int) -> list:
+    """Like generate_photo_carousel, but asks Claude for a Pexels search query
+    per slide instead of picking from local filenames.
+
+    Each returned slide dict has a 'pexels_query' key instead of 'background_photo'.
+    photo_main.py resolves these to actual file paths after calling this function.
+    """
+    client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+
+    # Claude generates hook + value slides — CTA is always the fixed homepage slide
+    claude_slides = num_slides - 1
+    num_value = claude_slides - 1
+
+    prompt = f"""Create TikTok photo-overlay carousel content about "{topic}" for the app "{app_name}".
+
+Return a JSON array of exactly {claude_slides} slide objects.
+
+Slide 1 (hook):
+- "headline": a conversational scroll-stopper that makes a migraine sufferer think "that's exactly what happens to me." Sounds like a real person's spoken reaction, not an ad. Choose ONE of these formats:
+  * Personal discovery: "I tracked 6 months of migraines and [specific pattern from topic] showed up every single time"
+  * Pattern recognition: "This is why you get a migraine every time [specific scenario tied to topic]"
+  * POV moment: "POV: You check MigraineCast the morning of [specific scenario from topic] and it already warned you"
+  * Pain validation: "Nobody talks about [specific uncomfortable truth tied to topic] and it's ruining migraine sufferers' lives"
+  * Recognition: "If [very specific type of migraine situation tied to topic] keeps happening to you, this is why"
+  Must be specific to "{topic}" — never a generic app pitch.
+- "pexels_query": a vivid, specific 4-8 word search query describing the ideal background photo for this hook. Think cinematic and emotional — e.g. "woman lying in dark room with headache", "person canceling plans on phone looking sad". No brand names.
+
+Slides 2 to {claude_slides} (value slides, {num_value} total):
+- "headline": specific, pattern-recognition point (max 7 words, ALL CAPS). Must make a migraine sufferer think "that's exactly what happens to me."
+- "body": 1 sentence in first or second person. Max 18 words. Specific details beat vague claims.
+- "pexels_query": a vivid, specific 4-8 word search query for the ideal background photo. Match the slide's exact content — e.g. "feet soaking hot water tub", "peppermint essential oil bottle", "stormy weather dark clouds outside window", "person squinting at bright computer screen". No brand names.
+
+Rules:
+- THE GOAL IS RECOGNITION, NOT EDUCATION. Name exact scenarios, timeframes, and patterns.
+- Every slide must have a different pexels_query — no repeats.
+- Pexels queries should be highly visual and specific. Avoid abstract queries like "migraine pain" — instead describe a concrete scene or object.
+- No em-dashes (— or –). Use commas or periods instead.
+- Return ONLY a valid JSON array. No markdown fences, no explanation."""
+
+    message = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=1024,
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    raw = message.content[0].text.strip()
+    raw = re.sub(r"^```(?:json)?\s*", "", raw)
+    raw = re.sub(r"\s*```$", "", raw)
+    raw = raw.strip()
+
+    slides = json.loads(raw)
+
+    if not isinstance(slides, list):
+        raise ValueError("API response is not a JSON array.")
+    if len(slides) != claude_slides:
+        raise ValueError(f"Expected {claude_slides} slides, got {len(slides)}.")
+
+    return slides

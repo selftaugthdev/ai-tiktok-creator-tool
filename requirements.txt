@@ -3,3 +3,4 @@ pillow
 plotly
 kaleido
 python-dotenv
+requests

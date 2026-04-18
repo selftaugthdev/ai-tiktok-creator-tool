@@ -8,8 +8,9 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+import pexels
 from photo_renderer import configure_platform, render_photo_carousel
-from photo_script_gen import generate_photo_carousel
+from photo_script_gen import generate_photo_carousel, generate_photo_carousel_pexels
 from platforms import PLATFORMS
 from script_gen import generate_caption
 
@@ -34,6 +35,11 @@ Examples:
         default="tiktok",
         help="Target platform: 'tiktok' (1080×1920, default) or 'instagram' (1080×1350).",
     )
+    parser.add_argument(
+        "--pexels",
+        action="store_true",
+        help="Search Pexels for background photos instead of using local photos/ folder.",
+    )
     return parser.parse_args()
 
 
@@ -55,11 +61,11 @@ def main() -> None:
 
     app_slug = args.app.replace(" ", "_")
     topic_slug = args.topic.lower().replace(" ", "-")
-    output_base = Path("output") / "to-upload" / app_slug / args.platform / "photo"
+    output_base = Path("output") / "to-upload" / app_slug / args.platform / "photo" / "to_upload"
 
     # Find next carousel number (never overwrite existing)
     existing = []
-    for search_base in [output_base, Path("output") / "uploaded" / app_slug]:
+    for search_base in [Path("output") / "to-upload" / app_slug, Path("output") / "uploaded" / app_slug]:
         if search_base.exists():
             for p in search_base.rglob("carousel_*"):
                 if p.is_dir():
@@ -76,10 +82,28 @@ def main() -> None:
         print(f"[{i + 1}/{args.count}] Fetching content + photo selections from Claude...")
 
         try:
-            slides = generate_photo_carousel(args.app, args.topic, args.slides)
+            if args.pexels:
+                slides = generate_photo_carousel_pexels(args.app, args.topic, args.slides)
+            else:
+                slides = generate_photo_carousel(args.app, args.topic, args.slides)
         except Exception as exc:
             print(f"  Error generating content: {exc}", file=sys.stderr)
             continue
+
+        if args.pexels:
+            print(f"  Fetching {len(slides)} photos from Pexels...")
+            for j, slide in enumerate(slides, start=1):
+                query = slide.get("pexels_query", "")
+                if not query:
+                    continue
+                try:
+                    sys.stdout.write(f"    [{j}/{len(slides)}] {query!r}...")
+                    rel_path = pexels.fetch_photo(query)
+                    slide["background_photo"] = rel_path
+                    print(f" ✓")
+                except Exception as exc:
+                    print(f" ✗ ({exc})", file=sys.stderr)
+                    slide["background_photo"] = ""
 
         carousel_dir = output_base / f"carousel_{carousel_num}_{topic_slug}"
         print(f"[{i + 1}/{args.count}] Rendering slides → {carousel_dir}/")
