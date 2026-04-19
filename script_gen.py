@@ -223,4 +223,8 @@ Rules:
     caption = message.content[0].text.strip()
     app_cfg = get_app_config(app_name)
     cta = app_cfg["caption_cta"]
+    # Insert CTA before HASHTAGS section if present, otherwise append at end
+    if "HASHTAGS:" in caption:
+        parts = caption.split("HASHTAGS:", 1)
+        return f"{parts[0].rstrip()}\n\n{cta}\n\nHASHTAGS:{parts[1]}"
     return f"{caption}\n\n{cta}"

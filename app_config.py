@@ -34,7 +34,7 @@ CONFIGS = {
         "logo_path": Path("assets") / "calm_sos_logo.png",
         "watermark_text": "Calm SOS",
         "cta_download_line": "Download Calm SOS free on the App Store. Link in bio.",
-        "caption_cta": "You don't have to white-knuckle it alone. Calm SOS is free on the App Store. Link in bio.",
+        "caption_cta": "You don't have to white-knuckle it alone. Calm SOS is free to download on the App Store. Link in bio.",
         "audience": "panic attack sufferer",
         "mechanism_examples": "the fight-or-flight response, adrenaline spikes, the amygdala hijack, hyperventilation cycles, nervous system dysregulation",
         "tiktok_hashtags": "#panicattack #anxietyattack #anxietyrelief #socialanxiety #mentalhealth",
