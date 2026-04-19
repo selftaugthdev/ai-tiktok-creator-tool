@@ -4,10 +4,16 @@ import re
 
 import anthropic
 
+from app_config import get_app_config
+
 
 def generate_carousel(app_name: str, topic: str, num_slides: int = 7, style: str = "regular") -> list:
     """Call the Anthropic API to generate slide content for one carousel."""
     client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+    app_cfg = get_app_config(app_name)
+    audience = app_cfg["audience"]
+    mechanism_examples = app_cfg["mechanism_examples"]
+    cta_download_line = app_cfg["cta_download_line"]
 
     num_value_slides = num_slides - 2
 
@@ -30,10 +36,10 @@ Return a JSON array of exactly {num_slides} slide objects. Each object must have
 ---
 
 SLIDE 1 — EMOTIONAL HOOK
-Goal: Make a migraine sufferer feel immediately, deeply seen. This is the moment they stop scrolling because it feels like you read their mind.
+Goal: Make a {audience} feel immediately, deeply seen. This is the moment they stop scrolling because it feels like you read their mind.
 - No app mention. No data. No science yet.
 - Pure identity and pain. Speak directly to the invisible burden: cancelled plans, not being believed, dreading the unknown, losing control of their own life.
-- Use second person ("you", "your"). Write as if you have migraines too.
+- Use second person ("you", "your"). Write as if you have experienced this too.
 - Headline: a raw, specific emotional truth — not a question, not a generic hook. Something they have felt but never seen written down.
 - Body: double down on the feeling. Make them feel understood, not informed.
 - mascot_expression: "sad" or "stormy" (empathy, not alarm)
@@ -42,7 +48,7 @@ Goal: Make a migraine sufferer feel immediately, deeply seen. This is the moment
 
 {reframe_range} — REFRAME ({num_reframe} slide{"s" if num_reframe > 1 else ""})
 Goal: Transition from emotional to educational. Explain the science or pattern that causes what they just felt on slide 1. The tone shifts from empathetic to empowering — the reader goes from "I feel this" to "now I understand why."
-- Introduce the mechanism: barometric pressure drops, the trigeminovascular system, the prodrome phase, pattern recognition across time.
+- Introduce the mechanism: {mechanism_examples}.
 - Tie every scientific point directly back to the lived experience described on slide 1. Never explain in the abstract.
 - Each slide: one clear mechanism or insight. Use specific numbers and timeframes where possible ("pressure can drop 10 hPa in under 3 hours", "your brain detects changes 24-48 hours before the headache hits").
 - Language: plain, conversational. Write like a fellow sufferer who has done their homework, not a medical pamphlet.
@@ -62,7 +68,7 @@ Goal: Connect the insight to taking back control. This is where {app_name} earns
 
 SLIDE {num_slides} — CTA
 - Headline: a confident, outcome-focused call to action (max 8 words)
-- Body: must end with "Download {app_name} on iOS. Link in bio. Or download at www.migrainecast.app"
+- Body: must end with "{cta_download_line}"
 - mascot_expression: must be "smug"
 
 ---
@@ -70,7 +76,7 @@ SLIDE {num_slides} — CTA
 TONE RULES — read these carefully:
 - 40% emotional, 40% educational, 20% solution. This ratio must be felt across the carousel as a whole.
 - Never open with the app. Never use clinical or corporate language. No "game-changer", "empower", "unlock", "journey", "dive into".
-- Write every slide as if spoken by someone who has migraines and has done the research themselves.
+- Write every slide as if spoken by someone who experiences this and has done the research themselves.
 - Value slides should feel like something a reader would screenshot and send to someone who doesn't understand their condition.
 - Do NOT use em-dashes (— or –) anywhere. Use commas or periods instead.
 - Only include facts that are well-established in published research. Do not speculate.
@@ -91,7 +97,7 @@ Slide 1 (hook) must have:
   * "THIS IS WHY [topic-related situation] KEEPS HAPPENING TO YOU" (self-recognition)
   * "I DIDN'T BELIEVE MIGRAINES COULD BE PREDICTED UNTIL THIS" (social proof / discovery)
   Avoid: "DID YOU KNOW", "HERE'S WHAT", "THE TRUTH ABOUT". Must be specific to "{topic}", not generic migraine content.
-- "body": 1 sentence that makes the reader feel seen — like you lived this too (max 25 words, conversational, first or second person, NOT a definition or list)
+- "body": 1 sentence that makes the reader feel seen — like you lived this too (max 25 words, conversational, first or second person, NOT a definition or list). Write as if speaking to a {audience}.
 - "mascot_expression": one of "calm", "default", "sad", "smug", "stormy", "warning". Choose based on emotional tone.
 
 Slides 2 through {num_slides - 1} (value slides, {num_value_slides} slides) must have:
@@ -102,7 +108,7 @@ Slides 2 through {num_slides - 1} (value slides, {num_value_slides} slides) must
 
 Slide {num_slides} (CTA) must have:
 - "headline": call-to-action headline (max 8 words)
-- "body": must end with "Download {app_name} on iOS. Link in bio. Or download at www.migrainecast.app"
+- "body": must end with "{cta_download_line}"
 - "mascot_expression": must be "smug"
 
 Rules:
@@ -133,7 +139,7 @@ Slide structure:
    * "I DIDN'T BELIEVE MIGRAINES COULD BE PREDICTED UNTIL THIS" (social proof / discovery)
    Avoid: "DID YOU KNOW", "HERE'S WHAT", "THE TRUTH ABOUT". Body (max 25 words) must make the reader feel seen — like you lived this — not a definition or list.
 2-{num_slides - 1}. Value slides ({num_value_slides} slides): One specific, instantly recognizable insight per slide. Each must be distinct and make the reader think "that's me."
-{num_slides}. CTA slide: Encourage users to download {app_name} on iOS. The body must end with "Download {app_name} on iOS. Link in bio. Or download at www.migrainecast.app"
+{num_slides}. CTA slide: Encourage users to download {app_name} on iOS. The body must end with "{cta_download_line}"
 
 Copywriting rules for value slides — this is the most important part:
 - THE GOAL IS RECOGNITION, NOT EDUCATION. Every slide must make a migraine sufferer think "that's exactly what happens to me — I need this." That sense of being understood is what converts, not general facts.
@@ -215,5 +221,6 @@ Rules:
     )
 
     caption = message.content[0].text.strip()
-    cta = "Stay ahead of your migraines with the MigraineCast app, link in Bio, free to download in the App store or at www.migrainecast.app"
+    app_cfg = get_app_config(app_name)
+    cta = app_cfg["caption_cta"]
     return f"{caption}\n\n{cta}"

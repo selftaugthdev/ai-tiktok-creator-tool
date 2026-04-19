@@ -23,11 +23,24 @@ const { Command } = require('commander');
 
 const API = 'https://api.post-bridge.com';
 
-// ── TikTok fixed hashtags (always the same 5) ────────────────────────────────
-const TIKTOK_HASHTAGS = '#migraine #migrainerelief #migraineawareness #migrainewarrior #chronicmigraine';
+// ── Per-app hashtag configs ───────────────────────────────────────────────────
+const APP_HASHTAGS = {
+  migrainecast: {
+    tiktok:    '#migraine #migrainerelief #migraineawareness #migrainewarrior #chronicmigraine',
+    instagram: '#migraine #migrainelife #migrainerelief #migrainetriggers #migraineawareness #MigraineCast #chronicmigraine #migrainewarrior #headacherelief #migrainetips #weathermigraine #migrainesupport',
+  },
+  calmsos: {
+    tiktok:    '#panicattack #anxietyattack #anxietyrelief #socialanxiety #mentalhealth',
+    instagram: '#panicattack #anxietyattack #anxietyrelief #socialanxiety #mentalhealth #anxietytips #stress #anxietywarrior #panicattackhelp #calmdown #anxietysupport #mentalhealthmatters',
+  },
+};
 
-// ── Default Instagram hashtags (used when caption has no HASHTAGS: section) ──
-const INSTAGRAM_DEFAULT_HASHTAGS = '#migraine #migrainelife #migrainerelief #migrainetriggers #migraineawareness #MigraineCast #chronicmigraine #migrainewarrior #headacherelief #migrainetips #weathermigraine #migrainesupport';
+/** Detect which app a folder belongs to from its path. */
+function detectApp(folder) {
+  const lower = folder.toLowerCase();
+  if (lower.includes('calm') || lower.includes('calmsos') || lower.includes('calm_sos')) return 'calmsos';
+  return 'migrainecast'; // default
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -206,6 +219,11 @@ program
       : opts.schedule
         ? { scheduled_at: opts.schedule }
         : { use_queue: true };
+
+    // ── Resolve hashtags based on detected app ────────────────────────────────
+    const appKey = detectApp(folder);
+    const TIKTOK_HASHTAGS = APP_HASHTAGS[appKey].tiktok;
+    const INSTAGRAM_DEFAULT_HASHTAGS = APP_HASHTAGS[appKey].instagram;
 
     // ── TikTok post ───────────────────────────────────────────────────────────
     if (!opts.instagramOnly) {

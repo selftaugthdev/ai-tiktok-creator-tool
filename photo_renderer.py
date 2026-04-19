@@ -15,6 +15,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 import carousel_renderer as _cr
+from app_config import get_app_config
 from carousel_renderer import (
     _draw_centered_lines,
     _draw_stars,
@@ -29,9 +30,8 @@ from carousel_renderer import (
 )
 
 PHOTOS_DIR = Path("photos")
-CTA_BG_PATH = Path("assets") / "Home Premium.png"
-HOMEPAGE_SLIDE_PATH = Path("assets") / "MigraineCast Showing Home Page.jpg"
-MC_LOGO_PATH = Path("assets") / "Migraine Cast LOGO DARK MODE.png"
+# Fallback logo — used when app config logo is not found
+_FALLBACK_LOGO_PATH = Path("assets") / "Migraine Cast LOGO DARK MODE.png"
 
 # ── Bubble ────────────────────────────────────────────────────────────────────
 BUBBLE_COLOR = (255, 255, 255)
@@ -142,8 +142,8 @@ def _paste_logo(img: Image.Image, logo_path: Path, logo_w: int, logo_radius: int
 # Slide renderers
 # ---------------------------------------------------------------------------
 
-HOMEPAGE_CTA_HEADLINE = "STOP BEING BLINDSIDED BY MIGRAINES"
-HOMEPAGE_CTA_BODY = "Download MigraineCast on iOS. Link in bio."
+_MIGRAINECAST_CTA_HEADLINE = "STOP BEING BLINDSIDED BY MIGRAINES"
+_CALMSOS_CTA_HEADLINE = "YOU DON'T HAVE TO WHITE-KNUCKLE IT ALONE"
 
 REVIEW_BUBBLE_QUOTE_SIZE = 40
 REVIEW_BUBBLE_AUTHOR_SIZE = 32
@@ -185,10 +185,13 @@ def _draw_review_bubble(draw: ImageDraw.ImageDraw, review: dict, y: int) -> int:
     return y + bubble_h
 
 
-def _render_homepage_cta(output_path: Path) -> None:
+def _render_homepage_cta(output_path: Path, app_name: str = "MigraineCast") -> None:
     """Final slide: homepage photo + headline bubble + review bubble + body bubble."""
-    if HOMEPAGE_SLIDE_PATH.exists():
-        img = _load_and_crop(HOMEPAGE_SLIDE_PATH)
+    app_cfg = get_app_config(app_name)
+    homepage_path = app_cfg["homepage_slide_path"]
+
+    if homepage_path and homepage_path.exists():
+        img = _load_and_crop(homepage_path)
     else:
         img = Image.new("RGB", (WIDTH, HEIGHT), (20, 20, 20))
 
@@ -196,12 +199,23 @@ def _render_homepage_cta(output_path: Path) -> None:
     headline_font = load_font(VALUE_HEADLINE_SIZE, bold=True)
     body_font = load_font(VALUE_BODY_SIZE, bold=False)
 
-    y = _draw_bubble(draw, HOMEPAGE_CTA_HEADLINE, headline_font, VALUE_TOP_BUBBLE_Y)
-    y += 50
-    _draw_review_bubble(draw, random.choice(REVIEWS), y)
+    # Headline: app-specific
+    if "calm" in app_name.lower():
+        cta_headline = _CALMSOS_CTA_HEADLINE
+    else:
+        cta_headline = _MIGRAINECAST_CTA_HEADLINE
 
-    body_bh = _bubble_height(draw, HOMEPAGE_CTA_BODY, body_font)
-    _draw_bubble(draw, HOMEPAGE_CTA_BODY, body_font, VALUE_BOTTOM_BUBBLE_BOTTOM - body_bh)
+    y = _draw_bubble(draw, cta_headline, headline_font, VALUE_TOP_BUBBLE_Y)
+
+    # Review bubble (skip if app has no reviews)
+    available_reviews = app_cfg["reviews"] or REVIEWS
+    if available_reviews:
+        y += 50
+        _draw_review_bubble(draw, random.choice(available_reviews), y)
+
+    cta_body = app_cfg["cta_download_line"]
+    body_bh = _bubble_height(draw, cta_body, body_font)
+    _draw_bubble(draw, cta_body, body_font, VALUE_BOTTOM_BUBBLE_BOTTOM - body_bh)
 
     img.save(output_path, "PNG")
 
@@ -226,8 +240,10 @@ def _render_hook(slide: dict, output_path: Path, app_name: str) -> None:
     name_bh = _bubble_height(draw, app_name, name_font)
     logo_y = HOOK_BRANDING_BOTTOM - name_bh - HOOK_LOGO_GAP - HOOK_LOGO_W
 
-    if MC_LOGO_PATH.exists():
-        _paste_logo(img, MC_LOGO_PATH, HOOK_LOGO_W, HOOK_LOGO_RADIUS, logo_y)
+    app_cfg = get_app_config(app_name)
+    logo_path = app_cfg["logo_path"] if app_cfg["logo_path"].exists() else _FALLBACK_LOGO_PATH
+    if logo_path.exists():
+        _paste_logo(img, logo_path, HOOK_LOGO_W, HOOK_LOGO_RADIUS, logo_y)
 
     # Re-acquire draw after paste
     draw = ImageDraw.Draw(img)
@@ -282,8 +298,11 @@ def _render_value(slide: dict, output_path: Path) -> None:
 
 
 def _render_cta(slide: dict, output_path: Path, app_name: str) -> None:
-    if CTA_BG_PATH.exists():
-        img = _load_and_crop(CTA_BG_PATH)
+    app_cfg = get_app_config(app_name)
+    cta_bg = app_cfg["app_screenshot_path"]
+
+    if cta_bg and cta_bg.exists():
+        img = _load_and_crop(cta_bg)
     else:
         img = Image.new("RGB", (WIDTH, HEIGHT), (15, 23, 42))
 
@@ -292,8 +311,9 @@ def _render_cta(slide: dict, output_path: Path, app_name: str) -> None:
     draw = ImageDraw.Draw(img)
 
     y = CTA_LOGO_Y
-    if MC_LOGO_PATH.exists():
-        _paste_logo(img, MC_LOGO_PATH, CTA_LOGO_W, CTA_LOGO_RADIUS, y)
+    logo_path = app_cfg["logo_path"] if app_cfg["logo_path"].exists() else _FALLBACK_LOGO_PATH
+    if logo_path.exists():
+        _paste_logo(img, logo_path, CTA_LOGO_W, CTA_LOGO_RADIUS, y)
         draw = ImageDraw.Draw(img)
         y += CTA_LOGO_W + CTA_LOGO_GAP
 
@@ -320,7 +340,7 @@ def render_photo_carousel(slides: list, output_dir: Path, app_name: str, topic: 
         filename = output_dir / f"slide_{i:02d}.png"
 
         if kind == "homepage":
-            _render_homepage_cta(filename)
+            _render_homepage_cta(filename, app_name)
         elif i == 1:
             _render_hook(slide, filename, app_name)
         else:

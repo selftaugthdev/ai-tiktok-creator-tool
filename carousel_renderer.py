@@ -4,6 +4,7 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
+from app_config import get_app_config
 from chart_generator import generate_chart_image
 
 # Canvas dimensions (TikTok portrait)
@@ -37,8 +38,7 @@ MASCOT_PAD_X = 60
 MASCOT_PAD_Y = 20
 VALID_EXPRESSIONS = {"calm", "default", "sad", "smug", "stormy", "warning"}
 
-# MigraineCast logo (CTA slide)
-MC_LOGO_PATH = Path("assets") / "migraine_logo white.png"
+# App logo (CTA slide) — resolved per app at render time via get_app_config()
 MC_LOGO_W = 280
 MC_LOGO_RADIUS = 52
 MC_LOGO_GAP = 40   # gap between logo and headline
@@ -51,14 +51,15 @@ TESTIMONIAL_BG = (255, 200, 215)   # slightly deeper pink
 REVIEW_STAR_OUTER_R = 26   # outer radius of each star point (diameter = 52px)
 REVIEW_STAR_INNER_R = 11   # inner radius (valley between points)
 REVIEW_AUTHOR_SIZE = 30
+# Default reviews — used as fallback when app config has none
 REVIEWS = [
     {
         "quote": "\u201cAll of my migraines were in line with high or medium risk days on the app.\u201d",
-        "author": "— Selen_B_D, App Store",
+        "author": "\u2014 Selen_B_D, App Store",
     },
     {
         "quote": "\u201cI was sceptical at first, but the weather does have impact on my migraine, a lot more than I had ever thought possible. This app has become my daily go-to.\u201d",
-        "author": "— Winter-flowers-in-summer, App Store",
+        "author": "\u2014 Winter-flowers-in-summer, App Store",
     },
 ]
 
@@ -479,7 +480,8 @@ def render_slide(
         testimonial_font = None
         author_font = None
         if is_cta:
-            review = random.choice(REVIEWS)
+            available_reviews = app_cfg["reviews"] or REVIEWS
+            review = random.choice(available_reviews)
             testimonial_font = load_font(TESTIMONIAL_FONT_SIZE, bold=False)
             author_font = load_font(REVIEW_AUTHOR_SIZE, bold=False)
             testimonial_lines = _wrap_text(
@@ -504,8 +506,9 @@ def render_slide(
 
         # Load logo for CTA slide
         mc_logo_img = None
-        if is_cta and MC_LOGO_PATH.exists():
-            mc_logo_img = Image.open(MC_LOGO_PATH).convert("RGBA")
+        logo_path = app_cfg["logo_path"]
+        if is_cta and logo_path.exists():
+            mc_logo_img = Image.open(logo_path).convert("RGBA")
             mc_logo_img = mc_logo_img.resize((MC_LOGO_W, MC_LOGO_W), Image.LANCZOS)
 
         # Calculate total content block height
@@ -586,7 +589,8 @@ def render_slide(
     draw.rectangle([(0, bar_y), (WIDTH, HEIGHT)], fill=ACCENT_COLOR)
 
     # ── App name watermark (top-left, same row as slide counter) ─────────────
-    wm_text = "www.migrainecast.app" if "migrainecast" in app_name.lower() else app_name
+    app_cfg = get_app_config(app_name)
+    wm_text = app_cfg["watermark_text"]
     is_screenshot_slide = "screenshot_path" in slide
     wm_fill = (30, 30, 30) if is_screenshot_slide else COLOR_WATERMARK
     wm_x = max(SLIDE_NUM_MARGIN - 20, 20) if is_screenshot_slide else SLIDE_NUM_MARGIN
