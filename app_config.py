@@ -90,7 +90,7 @@ CONFIGS = {
         "text_body_color":         (201, 184, 232),   # #C9B8E8 soft lavender
         "watermark_color":         (160, 196, 255),   # #A0C4FF pastel blue
         "testimonial_bg_color":    (20,  55,  130),   # lighter navy
-        "infographic_circle_color":(30,  65,  145),   # lighter navy for circles
+        "infographic_circle_color":(201, 184, 232),   # #C9B8E8 soft lavender
     },
 }
 
