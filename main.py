@@ -77,6 +77,10 @@ def main() -> None:
     platform_cfg = PLATFORMS[args.platform]
     carousel_renderer.configure_platform(platform_cfg)
 
+    from app_config import get_app_config
+    app_cfg = get_app_config(args.app)
+    carousel_renderer.configure_app(app_cfg)
+
     app_slug = args.app.replace(" ", "_")
     topic_slug = args.topic.lower().replace(" ", "-")
     style_folder = args.style  # "regular", "infographic", or "hybrid"
@@ -113,10 +117,9 @@ def main() -> None:
             continue
 
         # Inject app screenshot slides before the CTA (last slide)
-        _screenshot_options = [
-            Path("assets") / "MigraineCast Showing Home Page.jpg",
-            Path("assets") / "MigraineCast Showing Smart alert.jpg",
-        ]
+        _screenshot_options = [p for p in app_cfg.get("screenshot_options", []) if p.exists()]
+        if not _screenshot_options:
+            _screenshot_options = [Path("assets") / "MigraineCast Showing Home Page.jpg"]
         screenshot_slides = [
             {"screenshot_path": str(random.choice(_screenshot_options)), "mascot_expression": "default"},
         ]

@@ -94,6 +94,20 @@ def configure_platform(cfg) -> None:
     SAFE_ZONE_BOTTOM = cfg.safe_zone_bottom
 
 
+def configure_app(app_cfg: dict) -> None:
+    """Update module-level color constants for the target app.
+    Call this before rendering alongside configure_platform."""
+    global BG_COLOR, ACCENT_COLOR, COLOR_HEADLINE, COLOR_BODY
+    global COLOR_WATERMARK, TESTIMONIAL_BG, INFOGRAPHIC_CIRCLE_FILL
+    BG_COLOR               = app_cfg["bg_color"]
+    ACCENT_COLOR           = app_cfg["accent_color"]
+    COLOR_HEADLINE         = app_cfg["text_headline_color"]
+    COLOR_BODY             = app_cfg["text_body_color"]
+    COLOR_WATERMARK        = app_cfg["watermark_color"]
+    TESTIMONIAL_BG         = app_cfg["testimonial_bg_color"]
+    INFOGRAPHIC_CIRCLE_FILL = app_cfg["infographic_circle_color"]
+
+
 # ---------------------------------------------------------------------------
 # Font loading
 # ---------------------------------------------------------------------------
@@ -609,7 +623,7 @@ def render_slide(
     is_hook_or_cta = slide_index == 1
     expression = mascot_expression if mascot_expression in VALID_EXPRESSIONS else "default"
     mascot_path = MASCOT_DIR / f"mascot_{expression}.png"
-    if not is_infographic_value and is_hook_or_cta and HEIGHT >= 1700 and mascot_path.exists():
+    if not is_infographic_value and is_hook_or_cta and HEIGHT >= 1700 and mascot_path.exists() and app_cfg.get("has_mascot", True):
         mascot_img = Image.open(mascot_path).convert("RGBA")
         ratio = MASCOT_W / mascot_img.width
         mascot_h = int(mascot_img.height * ratio)
