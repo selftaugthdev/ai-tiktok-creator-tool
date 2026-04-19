@@ -64,7 +64,16 @@ CONFIGS = {
         "tiktok_hashtags": "#panicattack #anxietyattack #anxietyrelief #socialanxiety #mentalhealth",
         "instagram_hashtags": "#panicattack #anxietyattack #anxietyrelief #socialanxiety #mentalhealth #anxietytips #stress #anxietywarrior #panicattackhelp #calmdown #anxietysupport #mentalhealthmatters",
         # Reviews
-        "reviews": [],
+        "reviews": [
+            {
+                "quote": "\u201cThis app got me through my worst panic attack. I don\u2019t go anywhere without it.\u201d",
+                "author": "\u2014 App Store Review",
+            },
+            {
+                "quote": "\u201cFinally something that actually works when anxiety hits. The breathing exercises alone are worth it.\u201d",
+                "author": "\u2014 App Store Review",
+            },
+        ],
         # Screenshots
         "app_screenshot_path": Path("assets") / "Calm SOS HOME PAGE.jpg",
         "homepage_slide_path": Path("assets") / "Calm SOS HOME PAGE.jpg",
