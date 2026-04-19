@@ -371,6 +371,8 @@ def render_slide(
     mascot_expression: str = "default",
 ) -> None:
     """Render a single slide and save it as a PNG."""
+    app_cfg = get_app_config(app_name)
+
     img = Image.new("RGB", (WIDTH, HEIGHT), color=BG_COLOR)
     draw = ImageDraw.Draw(img)
 
@@ -589,7 +591,6 @@ def render_slide(
     draw.rectangle([(0, bar_y), (WIDTH, HEIGHT)], fill=ACCENT_COLOR)
 
     # ── App name watermark (top-left, same row as slide counter) ─────────────
-    app_cfg = get_app_config(app_name)
     wm_text = app_cfg["watermark_text"]
     is_screenshot_slide = "screenshot_path" in slide
     wm_fill = (30, 30, 30) if is_screenshot_slide else COLOR_WATERMARK
