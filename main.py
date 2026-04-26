@@ -84,7 +84,10 @@ def main() -> None:
     app_slug = args.app.replace(" ", "_")
     topic_slug = args.topic.lower().replace(" ", "-")
     style_folder = args.style  # "regular", "infographic", or "hybrid"
-    output_base = Path("output") / "to-upload" / app_slug / args.platform / style_folder / "to_upload"
+    if args.style == "infographic":
+        output_base = Path("output") / "grids" / args.platform / "to_upload"
+    else:
+        output_base = Path("output") / "to-upload" / app_slug / args.platform / style_folder / "to_upload"
 
     # Find the next carousel number so existing ones are never overwritten.
     # Search all style subfolders under to-upload and uploaded to avoid collisions.

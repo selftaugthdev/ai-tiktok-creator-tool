@@ -13,6 +13,7 @@
  *   POSTBRIDGE_API_KEY
  *   POSTBRIDGE_INSTAGRAM_ACCOUNT_ID
  *   POSTBRIDGE_TIKTOK_ACCOUNT_ID
+ *   POSTBRIDGE_PINTEREST_ACCOUNT_ID   (optional — only needed when posting to Pinterest)
  */
 
 require('dotenv').config();
@@ -117,33 +118,43 @@ function moveToScheduled(folder) {
   console.log(`\nMoved to: ${path.relative(process.cwd(), dest)}`);
 }
 
-/** Two-step Post Bridge media upload. Returns media_id. */
-async function uploadFile(filePath) {
+/** Two-step Post Bridge media upload. Returns media_id. Retries up to 3 times on network errors. */
+async function uploadFile(filePath, attempt = 1) {
   const stats    = fs.statSync(filePath);
   const fileName = path.basename(filePath);
 
-  // Step 1: get signed upload URL
-  const urlRes = await fetch(`${API}/v1/media/create-upload-url`, {
-    method:  'POST',
-    headers: apiHeaders(),
-    body:    JSON.stringify({ name: fileName, mime_type: 'image/png', size_bytes: stats.size }),
-  });
-  if (!urlRes.ok) {
-    const err = await urlRes.json().catch(() => ({}));
-    throw new Error(`Failed to get upload URL for ${fileName}: ${JSON.stringify(err)}`);
+  try {
+    // Step 1: get signed upload URL
+    const urlRes = await fetch(`${API}/v1/media/create-upload-url`, {
+      method:  'POST',
+      headers: apiHeaders(),
+      body:    JSON.stringify({ name: fileName, mime_type: 'image/png', size_bytes: stats.size }),
+    });
+    if (!urlRes.ok) {
+      const err = await urlRes.json().catch(() => ({}));
+      throw new Error(`Failed to get upload URL for ${fileName}: ${JSON.stringify(err)}`);
+    }
+    const { media_id, upload_url } = await urlRes.json();
+
+    // Step 2: PUT the file to the signed URL
+    const fileBuffer = fs.readFileSync(filePath);
+    const putRes = await fetch(upload_url, {
+      method:  'PUT',
+      headers: { 'Content-Type': 'image/png' },
+      body:    fileBuffer,
+    });
+    if (!putRes.ok) throw new Error(`Failed to upload file ${fileName} to signed URL`);
+
+    return media_id;
+  } catch (err) {
+    if (attempt < 4) {
+      const delay = attempt * 2000;
+      process.stdout.write(` (retry ${attempt}/3, waiting ${delay / 1000}s)...`);
+      await new Promise(r => setTimeout(r, delay));
+      return uploadFile(filePath, attempt + 1);
+    }
+    throw err;
   }
-  const { media_id, upload_url } = await urlRes.json();
-
-  // Step 2: PUT the file to the signed URL
-  const fileBuffer = fs.readFileSync(filePath);
-  const putRes = await fetch(upload_url, {
-    method:  'PUT',
-    headers: { 'Content-Type': 'image/png' },
-    body:    fileBuffer,
-  });
-  if (!putRes.ok) throw new Error(`Failed to upload file ${fileName} to signed URL`);
-
-  return media_id;
 }
 
 /** Create a post via Post Bridge API. */
@@ -170,19 +181,34 @@ program
   .option('--now', 'Post immediately instead of queuing.')
   .option('--tiktok-only', 'Only post to TikTok.')
   .option('--instagram-only', 'Only post to Instagram.')
+  .option('--pinterest-only', 'Only post to Pinterest.')
   .action(async (opts) => {
     const key = process.env.POSTBRIDGE_API_KEY;
     if (!key) { console.error('POSTBRIDGE_API_KEY not set in .env'); process.exit(1); }
 
-    const igId     = parseInt(process.env.POSTBRIDGE_INSTAGRAM_ACCOUNT_ID, 10);
-    const tiktokId = parseInt(process.env.POSTBRIDGE_TIKTOK_ACCOUNT_ID, 10);
+    const igId        = parseInt(process.env.POSTBRIDGE_INSTAGRAM_ACCOUNT_ID, 10);
+    const pinterestId = parseInt(process.env.POSTBRIDGE_PINTEREST_ACCOUNT_ID, 10);
 
-    if (!opts.instagramOnly && isNaN(tiktokId)) {
-      console.error('POSTBRIDGE_TIKTOK_ACCOUNT_ID not set in .env. Run: node bin/list-accounts.js');
+    // Pick the right TikTok account based on which app the folder belongs to
+    const appKey   = detectApp(opts.folder);
+    const tiktokId = appKey === 'calmsos'
+      ? parseInt(process.env.POSTBRIDGE_CALMSOS_TIKTOK_ACCOUNT_ID, 10)
+      : parseInt(process.env.POSTBRIDGE_TIKTOK_ACCOUNT_ID, 10);
+
+    const tiktokEnvVar = appKey === 'calmsos'
+      ? 'POSTBRIDGE_CALMSOS_TIKTOK_ACCOUNT_ID'
+      : 'POSTBRIDGE_TIKTOK_ACCOUNT_ID';
+
+    if (!opts.instagramOnly && !opts.pinterestOnly && isNaN(tiktokId)) {
+      console.error(`${tiktokEnvVar} not set in .env. Run: node bin/list-accounts.js`);
       process.exit(1);
     }
-    if (!opts.tiktokOnly && isNaN(igId)) {
+    if (!opts.tiktokOnly && !opts.pinterestOnly && isNaN(igId)) {
       console.error('POSTBRIDGE_INSTAGRAM_ACCOUNT_ID not set in .env. Run: node bin/list-accounts.js');
+      process.exit(1);
+    }
+    if (opts.pinterestOnly && isNaN(pinterestId)) {
+      console.error('POSTBRIDGE_PINTEREST_ACCOUNT_ID not set in .env. Run: node bin/list-accounts.js');
       process.exit(1);
     }
 
@@ -221,12 +247,37 @@ program
         : { use_queue: true };
 
     // ── Resolve hashtags based on detected app ────────────────────────────────
-    const appKey = detectApp(folder);
     const TIKTOK_HASHTAGS = APP_HASHTAGS[appKey].tiktok;
     const INSTAGRAM_DEFAULT_HASHTAGS = APP_HASHTAGS[appKey].instagram;
 
+    // ── Pinterest post ────────────────────────────────────────────────────────
+    if (opts.pinterestOnly || (!opts.tiktokOnly && !opts.instagramOnly && !isNaN(pinterestId))) {
+      if (isNaN(pinterestId)) {
+        console.log('\nSkipping Pinterest (POSTBRIDGE_PINTEREST_ACCOUNT_ID not set).');
+      } else {
+        const pinterestCaption = [description, cta].filter(Boolean).join('\n\n');
+
+        const pinterestPayload = {
+          caption:         pinterestCaption,
+          social_accounts: [pinterestId],
+          media:           mediaIds,
+          platform_configurations: {
+            pinterest: {
+              title:   title || undefined,
+              caption: pinterestCaption,
+            },
+          },
+          ...scheduling,
+        };
+
+        process.stdout.write('\nCreating Pinterest post...');
+        const pinterestPost = await createPost(pinterestPayload);
+        console.log(` ✓ (post id: ${pinterestPost.id})`);
+      }
+    }
+
     // ── TikTok post ───────────────────────────────────────────────────────────
-    if (!opts.instagramOnly) {
+    if (!opts.instagramOnly && !opts.pinterestOnly) {
       const tiktokCaption = [description, cta, TIKTOK_HASHTAGS].filter(Boolean).join('\n\n');
 
       const tiktokPayload = {
@@ -249,7 +300,7 @@ program
     }
 
     // ── Instagram post ────────────────────────────────────────────────────────
-    if (!opts.tiktokOnly) {
+    if (!opts.tiktokOnly && !opts.pinterestOnly) {
       const igHashtags = hashtags || INSTAGRAM_DEFAULT_HASHTAGS;
       const igCaption = [description, cta, igHashtags].filter(Boolean).join('\n\n');
 
