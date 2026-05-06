@@ -13,7 +13,7 @@ def generate_carousel(app_name: str, topic: str, num_slides: int = 7, style: str
     app_cfg = get_app_config(app_name)
     audience = app_cfg["audience"]
     mechanism_examples = app_cfg["mechanism_examples"]
-    cta_download_line = app_cfg["cta_download_line"]
+    cta_tagline = app_cfg["cta_tagline"]
 
     num_value_slides = num_slides - 2
 
@@ -28,10 +28,12 @@ def generate_carousel(app_name: str, topic: str, num_slides: int = 7, style: str
 
 This format has a specific emotional arc: start with pure human pain, teach the science behind it, then arrive at the solution. Never lead with the app. Never sound like an ad.
 
-Return a JSON array of exactly {num_slides} slide objects. Each object must have:
+Return a JSON array of exactly {num_slides} slide objects. Slides 1 through {num_slides - 1} must have:
 - "headline": punchy, ALL CAPS, max 8 words
 - "body": 1-2 sentences, max 25 words
 - "mascot_expression": one of "calm", "default", "sad", "smug", "stormy", "warning"
+
+The last slide (slide {num_slides}) has a different schema — see below.
 
 ---
 
@@ -66,10 +68,15 @@ Goal: Connect the insight to taking back control. This is where {app_name} earns
 
 ---
 
+SLIDE {num_slides - 1} — EDUCATIONAL CLOSE
+This is the last payoff slide before the CTA. It must feel like the most powerful insight in the carousel, the moment where the reader thinks "I need to act on this." Do NOT mention the app, the download, or anything promotional. It should be pure educational value, a natural close to the content arc.
+
+---
+
 SLIDE {num_slides} — CTA
-- Headline: a confident, outcome-focused call to action (max 8 words)
-- Body: must end with "{cta_download_line}"
-- mascot_expression: must be "smug"
+- "headline": must be exactly "{cta_tagline}"
+- "mascot_expression": must be "smug"
+- Do NOT include a "body" field on this slide.
 
 ---
 
@@ -106,10 +113,16 @@ Slides 2 through {num_slides - 1} (value slides, {num_value_slides} slides) must
 - "items": list of 4-6 objects, each with "label" (short phrase, max 4 words) and "emoji" (a single emoji character). Items must be specific, concrete, and instantly recognizable to a migraine sufferer — not clinical labels.
 - "mascot_expression": one of "calm", "default", "sad", "smug", "stormy", "warning". Choose based on emotional tone.
 
+Slide {num_slides - 1} (educational close) must have:
+- "headline": category or theme name (max 8 words, ALL CAPS)
+- "subtitle": short descriptor phrase for the grid below (max 6 words, title case)
+- "items": list of 4-6 objects, each with "label" and "emoji". This is the most powerful slide in the carousel — the final insight before the CTA. Do NOT mention the app or download.
+- "mascot_expression": one of "calm", "default", "sad", "smug", "stormy", "warning"
+
 Slide {num_slides} (CTA) must have:
-- "headline": call-to-action headline (max 8 words)
-- "body": must end with "{cta_download_line}"
+- "headline": must be exactly "{cta_tagline}"
 - "mascot_expression": must be "smug"
+- Do NOT include a "body" field on this slide.
 
 Rules:
 - THE GOAL IS RECOGNITION, NOT EDUCATION. Every slide must make a migraine sufferer think "that's exactly what happens to me — I need this." Urgency comes from specificity, not from general facts.
@@ -138,8 +151,9 @@ Slide structure:
    * "THIS IS WHY [topic-related situation] KEEPS HAPPENING TO YOU" (self-recognition)
    * "I DIDN'T BELIEVE MIGRAINES COULD BE PREDICTED UNTIL THIS" (social proof / discovery)
    Avoid: "DID YOU KNOW", "HERE'S WHAT", "THE TRUTH ABOUT". Body (max 25 words) must make the reader feel seen — like you lived this — not a definition or list.
-2-{num_slides - 1}. Value slides ({num_value_slides} slides): One specific, instantly recognizable insight per slide. Each must be distinct and make the reader think "that's me."
-{num_slides}. CTA slide: Encourage users to download {app_name} on iOS. The body must end with "{cta_download_line}"
+2-{num_slides - 2}. Value slides ({num_value_slides - 1} slides): One specific, instantly recognizable insight per slide. Each must be distinct and make the reader think "that's me."
+{num_slides - 1}. Educational close: The most powerful insight in the carousel. Do NOT mention the app or download. Write it as the final revelation that leaves the reader wanting to act. It must feel like a natural continuation of the value slides, not a bridge to an ad.
+{num_slides}. CTA slide: "headline" must be exactly "{cta_tagline}". "mascot_expression" must be "smug". Do NOT include a "body" field on this slide.
 
 Copywriting rules for value slides — this is the most important part:
 - THE GOAL IS RECOGNITION, NOT EDUCATION. Every slide must make a migraine sufferer think "that's exactly what happens to me — I need this." That sense of being understood is what converts, not general facts.
@@ -180,8 +194,11 @@ General rules:
     for i, slide in enumerate(slides):
         if "headline" not in slide:
             raise ValueError(f"Slide {i + 1} is missing 'headline' field.")
+        is_cta = i == num_slides - 1
         is_infographic_value = style == "infographic" and 0 < i < num_slides - 1
-        if is_infographic_value:
+        if is_cta:
+            pass  # CTA slide only needs headline and mascot_expression
+        elif is_infographic_value:
             if "items" not in slide or "subtitle" not in slide:
                 raise ValueError(f"Slide {i + 1} is missing 'items' or 'subtitle' field.")
         else:
@@ -189,6 +206,37 @@ General rules:
                 raise ValueError(f"Slide {i + 1} is missing 'body' field.")
 
     return slides
+
+
+def generate_hook_variants(hook: str, n: int) -> list:
+    """Return n rephrased versions of hook, each with a different emotional angle."""
+    client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+    prompt = f"""You are writing TikTok hooks for MigraineCast, a migraine weather forecasting app.
+
+Original hook:
+"{hook}"
+
+Write exactly {n} alternative versions of this hook. Each version must:
+- Preserve the exact same core claim or insight as the original
+- Use a clearly different emotional angle or tone — rotate through: curiosity, emotional validation, authority/data, POV/first-person, pattern-interrupt
+- Be roughly the same length as the original
+- Work as a standalone TikTok scroll-stopper without context
+- NOT use em-dashes (— or –). Use commas or periods instead.
+
+Return ONLY a JSON array of {n} strings. No markdown, no explanation."""
+
+    message = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=512,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    raw = message.content[0].text.strip()
+    raw = re.sub(r"^```(?:json)?\s*", "", raw)
+    raw = re.sub(r"\s*```$", "", raw)
+    variants = json.loads(raw.strip())
+    if not isinstance(variants, list) or len(variants) != n:
+        raise ValueError(f"Expected {n} variants, got: {raw[:120]}")
+    return [str(v) for v in variants]
 
 
 def generate_caption(app_name: str, topic: str) -> str:

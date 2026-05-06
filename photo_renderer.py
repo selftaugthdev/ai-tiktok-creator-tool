@@ -217,6 +217,24 @@ def _render_homepage_cta(output_path: Path, app_name: str = "MigraineCast") -> N
     body_bh = _bubble_height(draw, cta_body, body_font)
     _draw_bubble(draw, cta_body, body_font, VALUE_BOTTOM_BUBBLE_BOTTOM - body_bh)
 
+    language_note = app_cfg.get("language_note", "")
+    if language_note:
+        note_font = load_font(32, bold=False)
+        note_y = VALUE_BOTTOM_BUBBLE_BOTTOM + 24
+        lines = _wrap_text(draw, language_note, note_font, BUBBLE_W)
+        text_h = _text_block_height(draw, lines, note_font, 10)
+        pad_y = 16
+        box_h = text_h + 2 * pad_y
+        box_overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
+        ImageDraw.Draw(box_overlay).rounded_rectangle(
+            [(MARGIN_X, note_y - pad_y), (MARGIN_X + BUBBLE_W, note_y - pad_y + box_h)],
+            radius=14,
+            fill=(20, 20, 20, 190),
+        )
+        img = Image.alpha_composite(img.convert("RGBA"), box_overlay).convert("RGB")
+        draw = ImageDraw.Draw(img)
+        _draw_centered_lines(draw, lines, note_font, note_y, (255, 255, 255), line_gap=10)
+
     img.save(output_path, "PNG")
 
 
@@ -327,6 +345,88 @@ def _render_cta(slide: dict, output_path: Path, app_name: str) -> None:
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
+SANDRA_ASSETS_DIR = Path("assets")
+# Hook bubble starts just below the vertical center so Sandra's face stays visible above.
+_SANDRA_HOOK_Y_RATIO = 0.52
+
+
+def _render_sandra_hook(hook_text: str, sandra_image: str, output_path: Path) -> None:
+    """Slide 1: full-bleed Sandra photo with hook bubble in lower half."""
+    img_path = SANDRA_ASSETS_DIR / sandra_image
+    if img_path.exists():
+        img = _load_and_crop(img_path)
+    else:
+        img = Image.new("RGB", (WIDTH, HEIGHT), (20, 20, 20))
+
+    draw = ImageDraw.Draw(img)
+    font = load_font(HOOK_FONT_SIZE, bold=True)
+    bubble_y = int(HEIGHT * _SANDRA_HOOK_Y_RATIO)
+    _draw_bubble(draw, hook_text, font, bubble_y)
+
+    img.save(output_path, "PNG")
+
+
+def _render_sandra_app_showcase(output_path: Path, app_name: str) -> None:
+    """Second-to-last slide: clean app screenshot with tagline bubble at bottom."""
+    from app_config import get_app_config
+    app_cfg = get_app_config(app_name)
+    homepage_path = app_cfg["homepage_slide_path"]
+
+    if homepage_path and homepage_path.exists():
+        img = _load_and_crop(homepage_path)
+    else:
+        img = Image.new("RGB", (WIDTH, HEIGHT), (20, 20, 20))
+
+    # Light overlay keeps app UI visible
+    overlay = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 90))
+    img = Image.alpha_composite(img.convert("RGBA"), overlay).convert("RGB")
+
+    draw = ImageDraw.Draw(img)
+    font = load_font(VALUE_HEADLINE_SIZE, bold=True)
+    tagline = app_cfg.get("cta_tagline", "See your next migraine before it sees you.")
+    bh = _bubble_height(draw, tagline, font)
+    _draw_bubble(draw, tagline, font, VALUE_BOTTOM_BUBBLE_BOTTOM - bh)
+
+    img.save(output_path, "PNG")
+
+
+def render_sandra_carousel(hook: str, items: list, output_dir: Path, app_name: str) -> None:
+    """Render a full Sandra-style carousel.
+
+    items[0]  = {"sandra_image": "..."}                         hook metadata
+    items[1+] = {"headline": "...", "body": "...", "background_photo": "..."}  value slides
+
+    Fixed end slides added automatically: app showcase + homepage CTA.
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    sandra_image = items[0].get("sandra_image", "Sandra Neutral look.jpg")
+    value_slides = items[1:]
+    total = 1 + len(value_slides) + 1 + 1   # hook + values + showcase + cta
+
+    # Slide 1: Sandra hook
+    path = output_dir / "slide_01.png"
+    _render_sandra_hook(hook, sandra_image, path)
+    print(f"    slide 01/{total:02d} → {path.name}  [{sandra_image}]")
+
+    # Value slides
+    for idx, slide in enumerate(value_slides, start=2):
+        path = output_dir / f"slide_{idx:02d}.png"
+        _render_value(slide, path)
+        print(f"    slide {idx:02d}/{total:02d} → {path.name}")
+
+    # App showcase (second-to-last)
+    showcase_num = 1 + len(value_slides) + 1
+    path = output_dir / f"slide_{showcase_num:02d}.png"
+    _render_sandra_app_showcase(path, app_name)
+    print(f"    slide {showcase_num:02d}/{total:02d} → {path.name}")
+
+    # Homepage CTA (last)
+    path = output_dir / f"slide_{total:02d}.png"
+    _render_homepage_cta(path, app_name)
+    print(f"    slide {total:02d}/{total:02d} → {path.name}")
+
 
 def render_photo_carousel(slides: list, output_dir: Path, app_name: str, topic: str = "") -> None:
     """Render every slide. Injects topic slide after hook automatically."""

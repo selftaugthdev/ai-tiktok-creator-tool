@@ -14,7 +14,10 @@ CONFIGS = {
         "watermark_text": "www.migrainecast.app",
         "has_mascot": True,
         # CTAs
-        "cta_download_line": "Download MigraineCast on iOS. Link in bio. Or download at www.migrainecast.app",
+        "cta_tagline": "See your next migraine before it sees you",
+        "cta_follow_line": "Follow for daily migraine tips",
+        "cta_download_line": "Download MigraineCast on iOS. Link in bio. www.migrainecast.app",
+        "language_note": "Also Available In Dutch, German, French & Spanish",
         "caption_cta": "Stay ahead of your migraines with the MigraineCast app, link in Bio, free to download in the App store or at www.migrainecast.app",
         # Content
         "audience": "migraine sufferer",
@@ -35,7 +38,7 @@ CONFIGS = {
         ],
         # Screenshots
         "app_screenshot_path": Path("assets") / "Home Premium.png",
-        "homepage_slide_path": Path("assets") / "MigraineCast Showing Home Page.jpg",
+        "homepage_slide_path": Path("assets") / "MigraineCast Showing Homepage.jpg",
         "screenshot_options": [
             Path("assets") / "MigraineCast Showing Home Page.jpg",
             Path("assets") / "MigraineCast Showing Smart alert.jpg",
@@ -55,6 +58,8 @@ CONFIGS = {
         "watermark_text": "Calm SOS",
         "has_mascot": False,
         # CTAs
+        "cta_tagline": "Calm your panic attack in seconds",
+        "cta_follow_line": "Follow for daily anxiety tips",
         "cta_download_line": "Download Calm SOS free on the App Store. Link in bio.",
         "caption_cta": "You don't have to white-knuckle it alone. Calm SOS is free to download on the App Store. Link in bio.",
         # Content
@@ -83,14 +88,14 @@ CONFIGS = {
             Path("assets") / "Calm SOS Breathing Programs.jpg",
             Path("assets") / "Calm SOS Personal Coach.jpg",
         ],
-        # Colors (RGB tuples)  — Deep Navy palette
-        "bg_color":                (14,  45,  108),   # #0E2D6C deep navy
-        "accent_color":            (255, 107, 157),   # #FF6B9D hot pink (same)
-        "text_headline_color":     (240, 238, 246),   # near-white
-        "text_body_color":         (201, 184, 232),   # #C9B8E8 soft lavender
-        "watermark_color":         (160, 196, 255),   # #A0C4FF pastel blue
-        "testimonial_bg_color":    (20,  55,  130),   # lighter navy
-        "infographic_circle_color":(201, 184, 232),   # #C9B8E8 soft lavender
+        # Colors (RGB tuples)  — Lavender Lounge palette
+        "bg_color":                (206, 159, 252),   # #CE9FFC soft lavender
+        "accent_color":            (75,  82,  126),   # #4B527E dusty indigo
+        "text_headline_color":     (75,  82,  126),   # #4B527E dusty indigo
+        "text_body_color":         (255, 248, 220),   # #FFF8DC cream
+        "watermark_color":         (75,  82,  126),   # #4B527E dusty indigo
+        "testimonial_bg_color":    (185, 135, 245),   # #B987F5 deeper lavender
+        "infographic_circle_color":(230, 210, 255),   # #E6D2FF light lavender
     },
 }
 

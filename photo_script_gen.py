@@ -10,6 +10,16 @@ import anthropic
 
 PHOTOS_DIR = Path("photos")
 
+SANDRA_IMAGES = [
+    "Sandra Neutral look.jpg",
+    "Sandra headache.jpg",
+    "Sandra light sensitive.jpg",
+    "Sandra looking at camera no smile.jpg",
+    "Sandra lying in bed with headache.jpg",
+    "Sandra sick in bed checking phone.jpg",
+    "Sandra sitting kitchen table in hoodie.jpg",
+]
+
 
 def get_available_photos() -> list:
     """Scan photos/ recursively and return relative paths (folder/name.ext)."""
@@ -164,3 +174,71 @@ Rules:
         raise ValueError(f"Expected {claude_slides} slides, got {len(slides)}.")
 
     return slides
+
+
+def generate_sandra_carousel(hook: str, num_slides: int) -> list:
+    """Generate Sandra-style carousel content built around a given hook.
+
+    Returns a list of (num_slides - 2) dicts:
+      [0]  {"sandra_image": "<filename>"}         — Claude picks the best avatar
+      [1+] {"headline": "...", "body": "...", "pexels_query": "..."}  — value slides
+
+    The caller appends the two fixed end slides (app showcase + CTA) during rendering.
+    """
+    client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+
+    num_value = num_slides - 3          # subtract hook slide, app showcase, CTA
+    claude_items = num_value + 1        # hook metadata item + value slides
+
+    image_list = "\n".join(f"  - {img}" for img in SANDRA_IMAGES)
+
+    prompt = f"""Create TikTok Sandra-style carousel content built around this exact hook:
+"{hook}"
+
+Available Sandra avatar images:
+{image_list}
+
+Return a JSON array of exactly {claude_items} objects.
+
+Object 1 (hook avatar selection):
+- "sandra_image": match the image to the LITERAL CONTENT of the hook — not its tone. All hooks sound bold; choose based on what the hook is actually about:
+  * Hook mentions headache, pain, throbbing, temples, pressure → "Sandra headache.jpg"
+  * Hook mentions sleep (too much/little), waking up, bed, lying down, rest, fatigue → "Sandra lying in bed with headache.jpg"
+  * Hook mentions light, screens, brightness, sunglasses, photophobia → "Sandra light sensitive.jpg"
+  * Hook mentions tracking, app, phone, data, checking, logging, forecast → "Sandra sick in bed checking phone.jpg"
+  * Hook mentions morning, coffee, routine, cozy, recovery, brain fog, hoodie → "Sandra sitting kitchen table in hoodie.jpg"
+  * Hook is myth-busting or directly challenging the viewer ("You've been wrong about...") → "Sandra looking at camera no smile.jpg"
+  * Hook is factual, statistical, or informational → "Sandra Neutral look.jpg"
+  IMPORTANT: "Sandra looking at camera no smile.jpg" is for myth-busting only — do NOT use it just because the hook sounds bold or direct.
+
+Objects 2 to {claude_items} (value slides, {num_value} total):
+Each slide delivers one specific insight that validates and expands the hook.
+- "headline": max 7 words, ALL CAPS. Pattern-recognition statement — migraine sufferers should think "that's exactly what happens to me."
+- "body": 1 sentence, first or second person, max 18 words. Specific details beat vague claims.
+- "pexels_query": 4-8 word vivid scene description for the background photo (no brand names — describe a concrete visual scene or object).
+
+Rules:
+- Value slides must logically continue the hook: explain the WHY, the HOW, or what to do about it.
+- Every pexels_query must be unique.
+- No em-dashes. Use commas or periods instead.
+- Return ONLY a valid JSON array. No markdown fences, no explanation."""
+
+    message = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=1024,
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    raw = message.content[0].text.strip()
+    raw = re.sub(r"^```(?:json)?\s*", "", raw)
+    raw = re.sub(r"\s*```$", "", raw)
+    raw = raw.strip()
+
+    items = json.loads(raw)
+
+    if not isinstance(items, list):
+        raise ValueError("API response is not a JSON array.")
+    if len(items) < 2:
+        raise ValueError(f"Expected at least 2 items (avatar + 1 value slide), got {len(items)}.")
+
+    return items

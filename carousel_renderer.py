@@ -51,6 +51,13 @@ TESTIMONIAL_BG = (255, 200, 215)   # slightly deeper pink
 REVIEW_STAR_OUTER_R = 26   # outer radius of each star point (diameter = 52px)
 REVIEW_STAR_INNER_R = 11   # inner radius (valley between points)
 REVIEW_AUTHOR_SIZE = 30
+
+# CTA slide primary/secondary calls to action
+CTA_PRIMARY_FONT_SIZE = 52
+CTA_PRIMARY_PILL_PY = 22   # vertical padding inside the pill
+CTA_PRIMARY_PILL_GAP = 44  # gap between testimonial block and primary CTA pill
+CTA_SECONDARY_FONT_SIZE = 38
+CTA_SECONDARY_GAP = 20     # gap between primary pill and secondary CTA text
 # Default reviews — used as fallback when app config has none
 REVIEWS = [
     {
@@ -473,28 +480,28 @@ def render_slide(
 
     else:
         # ── Regular layout ────────────────────────────────────────────────────
+        is_cta = slide_index == total_slides
         headline_lines = _wrap_text(draw, slide["headline"], headline_font, available_width)
         headline_h = _text_block_height(draw, headline_lines, headline_font, 16)
-        body_lines = _wrap_text(draw, slide["body"], body_font, available_width)
-        body_h = _text_block_height(draw, body_lines, body_font, 14)
 
-        # Testimonial block (CTA / last slide only)
-        is_cta = slide_index == total_slides
-        BODY_SENTENCE_GAP = 32
-        body_sentence_blocks = None
-        body_sentence_heights = None
-        if is_cta:
-            body_sentences = _split_sentences(slide["body"])
-            if len(body_sentences) > 1:
-                body_sentence_blocks = [_wrap_text(draw, s, body_font, available_width) for s in body_sentences]
-                body_sentence_heights = [_text_block_height(draw, b, body_font, 14) for b in body_sentence_blocks]
-                body_h = sum(body_sentence_heights) + BODY_SENTENCE_GAP * (len(body_sentences) - 1)
+        # Non-CTA slides: measure body text
+        body_lines = []
+        body_h = 0
+        if not is_cta:
+            body_lines = _wrap_text(draw, slide.get("body", ""), body_font, available_width)
+            body_h = _text_block_height(draw, body_lines, body_font, 14)
 
+        # CTA slide: testimonial + two-CTA block
         review = None
         testimonial_lines = []
         testimonial_h = 0
         testimonial_font = None
         author_font = None
+        primary_cta_font = None
+        secondary_cta_font = None
+        secondary_cta_lines = []
+        primary_cta_pill_h = 0
+        secondary_cta_h = 0
         if is_cta:
             available_reviews = app_cfg["reviews"] or REVIEWS
             review = random.choice(available_reviews)
@@ -511,14 +518,26 @@ def render_slide(
             text_h = star_h + 12 + quote_h + 12 + author_h
             testimonial_h = text_h + TESTIMONIAL_PAD_Y * 2
 
-        # Resolve visual element — chart takes priority over illustration
+            primary_cta_font = load_font(CTA_PRIMARY_FONT_SIZE, bold=True)
+            pcta_bbox = draw.textbbox((0, 0), app_cfg["cta_follow_line"], font=primary_cta_font)
+            pcta_line_h = pcta_bbox[3] - pcta_bbox[1]
+            primary_cta_pill_h = pcta_line_h + CTA_PRIMARY_PILL_PY * 2
+
+            secondary_cta_font = load_font(CTA_SECONDARY_FONT_SIZE, bold=False)
+            secondary_cta_lines = _wrap_text(
+                draw, app_cfg["cta_download_line"], secondary_cta_font, available_width,
+            )
+            secondary_cta_h = _text_block_height(draw, secondary_cta_lines, secondary_cta_font, 12)
+
+        # Resolve visual element — chart takes priority over illustration (non-CTA only)
         visual_img = None
-        chart_data = slide.get("chart_data")
-        if chart_data:
-            visual_img = generate_chart_image(chart_data)
-        elif illustration_path:
-            visual_img = Image.open(illustration_path).convert("RGBA")
-            visual_img.thumbnail((ILLUS_MAX_W, ILLUS_MAX_H), Image.LANCZOS)
+        if not is_cta:
+            chart_data = slide.get("chart_data")
+            if chart_data:
+                visual_img = generate_chart_image(chart_data)
+            elif illustration_path:
+                visual_img = Image.open(illustration_path).convert("RGBA")
+                visual_img.thumbnail((ILLUS_MAX_W, ILLUS_MAX_H), Image.LANCZOS)
 
         # Load logo for CTA slide
         mc_logo_img = None
@@ -529,12 +548,21 @@ def render_slide(
 
         # Calculate total content block height
         block_gap = 60 if visual_img else 80
-        testimonial_gap = 40  # gap between headline and testimonial, and testimonial and body
+        testimonial_gap = 40
         logo_prefix_h = (MC_LOGO_W + MC_LOGO_GAP) if mc_logo_img else 0
         if visual_img:
             total_h = headline_h + block_gap + visual_img.height + block_gap + body_h
         elif is_cta:
-            total_h = logo_prefix_h + headline_h + testimonial_gap + testimonial_h + testimonial_gap + body_h
+            total_h = (
+                logo_prefix_h
+                + headline_h
+                + testimonial_gap
+                + testimonial_h
+                + CTA_PRIMARY_PILL_GAP
+                + primary_cta_pill_h
+                + CTA_SECONDARY_GAP
+                + secondary_cta_h
+            )
         else:
             total_h = headline_h + block_gap + body_h
 
@@ -562,42 +590,54 @@ def render_slide(
         y = _draw_centered_lines(draw, headline_lines, headline_font, y, COLOR_HEADLINE, line_gap=16)
         y += block_gap if not is_cta else testimonial_gap
 
-        # Review block (CTA slide only)
-        if is_cta and review:
-            rect_x = MARGIN_X
-            rect_h = testimonial_h
+        if is_cta:
+            # ── Review block ─────────────────────────────────────────────────
+            if review:
+                rect_x = MARGIN_X
+                draw.rounded_rectangle(
+                    [(rect_x, y), (rect_x + available_width, y + testimonial_h)],
+                    radius=20,
+                    fill=TESTIMONIAL_BG,
+                )
+                inner_y = y + TESTIMONIAL_PAD_Y
+                _draw_stars(draw, WIDTH // 2, inner_y, 5, REVIEW_STAR_OUTER_R, REVIEW_STAR_INNER_R, ACCENT_COLOR)
+                inner_y += REVIEW_STAR_OUTER_R * 2 + 12
+                inner_y = _draw_centered_lines(draw, testimonial_lines, testimonial_font, inner_y, COLOR_BODY, line_gap=12)
+                inner_y += 12
+                ab = draw.textbbox((0, 0), review["author"], font=author_font)
+                draw.text(((WIDTH - (ab[2] - ab[0])) // 2, inner_y), review["author"], font=author_font, fill=COLOR_BODY)
+                y += testimonial_h
+
+            y += CTA_PRIMARY_PILL_GAP
+
+            # ── Primary CTA pill ("Follow for daily migraine tips") ───────────
+            pcta_bbox2 = draw.textbbox((0, 0), app_cfg["cta_follow_line"], font=primary_cta_font)
+            pcta_line_h = pcta_bbox2[3] - pcta_bbox2[1]
             draw.rounded_rectangle(
-                [(rect_x, y), (rect_x + available_width, y + rect_h)],
-                radius=20,
-                fill=TESTIMONIAL_BG,
+                [(MARGIN_X, y), (MARGIN_X + available_width, y + primary_cta_pill_h)],
+                radius=primary_cta_pill_h // 2,
+                fill=ACCENT_COLOR,
             )
-            inner_y = y + TESTIMONIAL_PAD_Y
-            # Stars (centered, hot pink — drawn as polygons to avoid font-glyph issues)
-            _draw_stars(draw, WIDTH // 2, inner_y, 5, REVIEW_STAR_OUTER_R, REVIEW_STAR_INNER_R, ACCENT_COLOR)
-            inner_y += REVIEW_STAR_OUTER_R * 2 + 12
-            # Quote
-            inner_y = _draw_centered_lines(draw, testimonial_lines, testimonial_font, inner_y, COLOR_BODY, line_gap=12)
-            inner_y += 12
-            # Author name
-            ab = draw.textbbox((0, 0), review["author"], font=author_font)
-            draw.text(((WIDTH - (ab[2] - ab[0])) // 2, inner_y), review["author"], font=author_font, fill=COLOR_BODY)
-            y += rect_h + testimonial_gap
+            pcta_w = pcta_bbox2[2] - pcta_bbox2[0]
+            pcta_x = (WIDTH - pcta_w) // 2
+            pcta_y = y + (primary_cta_pill_h - pcta_line_h) // 2
+            draw.text((pcta_x, pcta_y), app_cfg["cta_follow_line"], font=primary_cta_font, fill=(255, 255, 255))
+            y += primary_cta_pill_h + CTA_SECONDARY_GAP
 
-        # Visual (chart or illustration)
-        if visual_img:
-            x_offset = (WIDTH - visual_img.width) // 2
-            if visual_img.mode == "RGBA":
-                img.paste(visual_img, (x_offset, y), mask=visual_img.split()[3])
-            else:
-                img.paste(visual_img, (x_offset, y))
-            y += visual_img.height + block_gap
+            # ── Secondary CTA ("Download ... Link in bio. URL") ───────────────
+            _draw_centered_lines(draw, secondary_cta_lines, secondary_cta_font, y, COLOR_BODY, line_gap=12)
 
-        # Body
-        if body_sentence_blocks:
-            for i, (block, bh) in enumerate(zip(body_sentence_blocks, body_sentence_heights)):
-                _draw_centered_lines(draw, block, body_font, y, COLOR_BODY, line_gap=14)
-                y += bh + (BODY_SENTENCE_GAP if i < len(body_sentence_blocks) - 1 else 0)
         else:
+            # Visual (chart or illustration)
+            if visual_img:
+                x_offset = (WIDTH - visual_img.width) // 2
+                if visual_img.mode == "RGBA":
+                    img.paste(visual_img, (x_offset, y), mask=visual_img.split()[3])
+                else:
+                    img.paste(visual_img, (x_offset, y))
+                y += visual_img.height + block_gap
+
+            # Body text
             _draw_centered_lines(draw, body_lines, body_font, y, COLOR_BODY, line_gap=14)
 
     # ── Bottom accent bar ─────────────────────────────────────────────────────
