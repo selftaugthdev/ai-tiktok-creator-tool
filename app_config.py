@@ -22,6 +22,37 @@ CONFIGS = {
         # Content
         "audience": "migraine sufferer",
         "mechanism_examples": "barometric pressure drops, the trigeminovascular system, the prodrome phase, pattern recognition across time",
+        # App screenshot slides (injected into Sandra carousels instead of showcase slide)
+        "app_carousel_screenshots": [
+            "3-day-forecast.png",
+            "todays-migrainerisk.png",
+            "trigger-guide.png",
+            "insights-pain-level.png",
+            "quick-log.png",
+            "fast-pressure-drop.png",
+        ],
+        # Sandra-style avatar carousel
+        "hooks_file": Path("assets") / "migrainecast_50_hooks.md",
+        "hooks_used_file": Path("assets") / "migrainecast_hooks_used.json",
+        "avatar_images": [
+            "Sandra Neutral look.jpg",
+            "Sandra headache.jpg",
+            "Sandra light sensitive.jpg",
+            "Sandra looking at camera no smile.jpg",
+            "Sandra lying in bed with headache.jpg",
+            "Sandra sick in bed checking phone.jpg",
+            "Sandra sitting kitchen table in hoodie.jpg",
+        ],
+        "avatar_image_guide": """\
+- Hook mentions headache, pain, throbbing, temples, pressure → "Sandra headache.jpg"
+- Hook mentions sleep (too much/little), waking up, bed, lying down, rest, fatigue → "Sandra lying in bed with headache.jpg"
+- Hook mentions light, screens, brightness, sunglasses, photophobia → "Sandra light sensitive.jpg"
+- Hook mentions tracking, app, phone, data, checking, logging, forecast → "Sandra sick in bed checking phone.jpg"
+- Hook mentions morning, coffee, routine, cozy, recovery, brain fog, hoodie → "Sandra sitting kitchen table in hoodie.jpg"
+- Hook is myth-busting or directly challenging the viewer ("You've been wrong about...") → "Sandra looking at camera no smile.jpg"
+- Hook is factual, statistical, or informational → "Sandra Neutral look.jpg"
+IMPORTANT: "Sandra looking at camera no smile.jpg" is for myth-busting only — do NOT use it just because the hook sounds bold or direct.\
+""",
         # Hashtags
         "tiktok_hashtags": "#migraine #migrainerelief #migraineawareness #migrainewarrior #chronicmigraine",
         "instagram_hashtags": "#migraine #migrainelife #migrainerelief #migrainetriggers #migraineawareness #MigraineCast #chronicmigraine #migrainewarrior #headacherelief #migrainetips #weathermigraine #migrainesupport",
@@ -65,6 +96,23 @@ CONFIGS = {
         # Content
         "audience": "panic attack sufferer",
         "mechanism_examples": "the fight-or-flight response, adrenaline spikes, the amygdala hijack, hyperventilation cycles, nervous system dysregulation",
+        # Avatar carousel — avatars are pre-mapped per hook in the hooks file
+        "hooks_file": Path("assets") / "calmsos_hooks_mapped.md",
+        "hooks_used_file": Path("assets") / "calm_sos_hooks_used.json",
+        "hooks_format": "mapped",   # avatar pre-mapped per hook when using --auto
+        "avatar_images": [
+            "lea_kitchen.png",
+            "lea_couch.png",
+            "lea_bed.png",
+            "lea_car.png",
+        ],
+        "avatar_image_guide": """\
+- Hook mentions panic attack, heart racing, chest tightness, dizzy, can't breathe, dying feeling → "lea_couch.png"
+- Hook mentions sleep, insomnia, 3am, awake, bed, exhausted, cortisol, can't sleep → "lea_bed.png"
+- Hook mentions driving, leaving the house, cancelled plans, parking lot, grocery store, car → "lea_car.png"
+- Hook mentions daily life, mental load, ADHD, trauma, anxiety, nervous system, general emotional content → "lea_kitchen.png"
+IMPORTANT: choose based on the LITERAL SETTING or CONTENT of the hook, not just its emotional tone.\
+""",
         # Hashtags
         "tiktok_hashtags": "#panicattack #anxietyattack #anxietyrelief #socialanxiety #mentalhealth",
         "instagram_hashtags": "#panicattack #anxietyattack #anxietyrelief #socialanxiety #mentalhealth #anxietytips #stress #anxietywarrior #panicattackhelp #calmdown #anxietysupport #mentalhealthmatters",

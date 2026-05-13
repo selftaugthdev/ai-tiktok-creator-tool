@@ -8,17 +8,9 @@ from pathlib import Path
 
 import anthropic
 
-PHOTOS_DIR = Path("photos")
+from app_config import get_app_config
 
-SANDRA_IMAGES = [
-    "Sandra Neutral look.jpg",
-    "Sandra headache.jpg",
-    "Sandra light sensitive.jpg",
-    "Sandra looking at camera no smile.jpg",
-    "Sandra lying in bed with headache.jpg",
-    "Sandra sick in bed checking phone.jpg",
-    "Sandra sitting kitchen table in hoodie.jpg",
-]
+PHOTOS_DIR = Path("photos")
 
 
 def get_available_photos() -> list:
@@ -176,51 +168,123 @@ Rules:
     return slides
 
 
-def generate_sandra_carousel(hook: str, num_slides: int) -> list:
-    """Generate Sandra-style carousel content built around a given hook.
+def generate_sandra_carousel(
+    hook: str,
+    num_slides: int,
+    app_name: str = "MigraineCast",
+    avatar_override: str = None,
+) -> list:
+    """Generate avatar-style carousel content built around a given hook.
 
     Returns a list of (num_slides - 2) dicts:
-      [0]  {"sandra_image": "<filename>"}         — Claude picks the best avatar
+      [0]  {"sandra_image": "<filename>"}         — avatar (pre-mapped or Claude-selected)
       [1+] {"headline": "...", "body": "...", "pexels_query": "..."}  — value slides
+
+    When avatar_override is provided the avatar is pre-mapped and Claude only generates
+    the value slides. Otherwise Claude picks the avatar from app_config avatar_images.
 
     The caller appends the two fixed end slides (app showcase + CTA) during rendering.
     """
     client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+    app_cfg = get_app_config(app_name)
+    audience = app_cfg.get("audience", "user")
+    carousel_screenshots = app_cfg.get("app_carousel_screenshots", [])
+    has_screenshots = bool(carousel_screenshots)
 
-    num_value = num_slides - 3          # subtract hook slide, app showcase, CTA
-    claude_items = num_value + 1        # hook metadata item + value slides
+    # Showcase slide is replaced by app screenshot slide when screenshots are configured,
+    # so num_value stays the same either way (screenshot takes showcase's slot).
+    num_value = num_slides - 3          # subtract hook slide, showcase/screenshot, CTA
 
-    image_list = "\n".join(f"  - {img}" for img in SANDRA_IMAGES)
+    screenshot_section = ""
+    if has_screenshots:
+        screenshot_options = "\n".join(
+            f"  - {f}" for f in carousel_screenshots
+        )
+        screenshot_section = f"""
 
-    prompt = f"""Create TikTok Sandra-style carousel content built around this exact hook:
+Final object (app screenshot slide — comes AFTER the value slides in the array):
+Pick the screenshot whose content most directly relates to the hook topic.
+Available screenshots:
+{screenshot_options}
+
+Return:
+- "app_screenshot": the chosen filename (exact, from the list above)
+- "label": 2-4 words, Title Case, describes what the screenshot shows (e.g. "3-Day Forecast", "Trigger Guide")
+- "body": 1-2 sentences, first or second person, max 20 words. Make the reader want to use this feature.
+- "pexels_query": 4-8 word vivid background photo description for this slide"""
+
+    if avatar_override:
+        # Avatar is pre-mapped — Claude only generates value slides (+ optional screenshot)
+        total_items = num_value + (1 if has_screenshots else 0)
+        prompt = f"""Create TikTok carousel slides built around this exact hook:
 "{hook}"
 
-Available Sandra avatar images:
-{image_list}
+Return a JSON array of exactly {total_items} objects.
 
-Return a JSON array of exactly {claude_items} objects.
-
-Object 1 (hook avatar selection):
-- "sandra_image": match the image to the LITERAL CONTENT of the hook — not its tone. All hooks sound bold; choose based on what the hook is actually about:
-  * Hook mentions headache, pain, throbbing, temples, pressure → "Sandra headache.jpg"
-  * Hook mentions sleep (too much/little), waking up, bed, lying down, rest, fatigue → "Sandra lying in bed with headache.jpg"
-  * Hook mentions light, screens, brightness, sunglasses, photophobia → "Sandra light sensitive.jpg"
-  * Hook mentions tracking, app, phone, data, checking, logging, forecast → "Sandra sick in bed checking phone.jpg"
-  * Hook mentions morning, coffee, routine, cozy, recovery, brain fog, hoodie → "Sandra sitting kitchen table in hoodie.jpg"
-  * Hook is myth-busting or directly challenging the viewer ("You've been wrong about...") → "Sandra looking at camera no smile.jpg"
-  * Hook is factual, statistical, or informational → "Sandra Neutral look.jpg"
-  IMPORTANT: "Sandra looking at camera no smile.jpg" is for myth-busting only — do NOT use it just because the hook sounds bold or direct.
-
-Objects 2 to {claude_items} (value slides, {num_value} total):
-Each slide delivers one specific insight that validates and expands the hook.
-- "headline": max 7 words, ALL CAPS. Pattern-recognition statement — migraine sufferers should think "that's exactly what happens to me."
+Objects 1 to {num_value} (value slides):
+Each delivers one specific insight that validates and expands the hook.
+- "headline": max 7 words, ALL CAPS. Pattern-recognition statement — {audience}s should think "that's exactly what happens to me."
 - "body": 1 sentence, first or second person, max 18 words. Specific details beat vague claims.
-- "pexels_query": 4-8 word vivid scene description for the background photo (no brand names — describe a concrete visual scene or object).
-
+- "pexels_query": 4-8 word vivid scene description for the background photo (no brand names).
+{screenshot_section}
 Rules:
 - Value slides must logically continue the hook: explain the WHY, the HOW, or what to do about it.
 - Every pexels_query must be unique.
-- No em-dashes. Use commas or periods instead.
+- NEVER use em-dashes (— – ‒ ―). This is a hard rule. Use commas or periods instead.
+- Return ONLY a valid JSON array. No markdown fences, no explanation."""
+
+        message = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=1024,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        raw = message.content[0].text.strip()
+        raw = re.sub(r"^```(?:json)?\s*", "", raw)
+        raw = re.sub(r"\s*```$", "", raw)
+        items = json.loads(raw.strip())
+
+        if not isinstance(items, list):
+            raise ValueError("API response is not a JSON array.")
+        if len(items) != total_items:
+            raise ValueError(f"Expected {total_items} items, got {len(items)}.")
+
+        return [{"sandra_image": avatar_override}] + items
+
+    # No pre-mapped avatar — Claude picks avatar + generates value slides (+ optional screenshot)
+    avatar_images = app_cfg.get("avatar_images", [])
+    avatar_image_guide = app_cfg.get("avatar_image_guide", "")
+
+    if not avatar_images:
+        raise ValueError(
+            f"No avatar images configured for {app_name!r}. "
+            "Add image filenames to 'avatar_images' in app_config.py."
+        )
+
+    total_items = num_value + 1 + (1 if has_screenshots else 0)  # avatar + values + screenshot
+    image_list = "\n".join(f"  - {img}" for img in avatar_images)
+
+    prompt = f"""Create TikTok avatar-style carousel content built around this exact hook:
+"{hook}"
+
+Available avatar images:
+{image_list}
+
+Return a JSON array of exactly {total_items} objects.
+
+Object 1 (hook avatar selection):
+- "sandra_image": match the image to the LITERAL CONTENT of the hook — not its tone. All hooks sound bold; choose based on what the hook is actually about:
+{avatar_image_guide}
+
+Objects 2 to {num_value + 1} (value slides, {num_value} total):
+Each delivers one specific insight that validates and expands the hook.
+- "headline": max 7 words, ALL CAPS. Pattern-recognition statement — {audience}s should think "that's exactly what happens to me."
+- "body": 1 sentence, first or second person, max 18 words. Specific details beat vague claims.
+- "pexels_query": 4-8 word vivid scene description for the background photo (no brand names).
+{screenshot_section}
+Rules:
+- Value slides must logically continue the hook: explain the WHY, the HOW, or what to do about it.
+- Every pexels_query must be unique.
+- NEVER use em-dashes (— – ‒ ―). This is a hard rule. Use commas or periods instead.
 - Return ONLY a valid JSON array. No markdown fences, no explanation."""
 
     message = client.messages.create(
@@ -238,7 +302,7 @@ Rules:
 
     if not isinstance(items, list):
         raise ValueError("API response is not a JSON array.")
-    if len(items) < 2:
-        raise ValueError(f"Expected at least 2 items (avatar + 1 value slide), got {len(items)}.")
+    if len(items) != total_items:
+        raise ValueError(f"Expected {total_items} items, got {len(items)}.")
 
     return items

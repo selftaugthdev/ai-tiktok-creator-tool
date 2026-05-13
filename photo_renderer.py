@@ -350,6 +350,79 @@ SANDRA_ASSETS_DIR = Path("assets")
 # Hook bubble starts just below the vertical center so Sandra's face stays visible above.
 _SANDRA_HOOK_Y_RATIO = 0.52
 
+# ── App screenshot overlay slide ───────────────────────────────────────────────
+_SCREENSHOT_LABEL_FONT_SIZE = 52
+_SCREENSHOT_MAX_W = 700
+_SCREENSHOT_CORNER_R = 20
+_SCREENSHOT_LABEL_PAD_X = 44
+_SCREENSHOT_LABEL_PAD_Y = 18
+
+
+def _render_app_screenshot_slide(slide: dict, output_path: Path, app_name: str) -> None:
+    """Pexels bg + accent label pill + white body bubble + app screenshot composited below."""
+    from app_config import get_app_config
+    app_cfg = get_app_config(app_name)
+    accent = app_cfg.get("accent_color", (255, 107, 157))
+
+    bg_rel = slide.get("background_photo", "")
+    bg_path = PHOTOS_DIR / bg_rel if bg_rel else None
+    if bg_path and bg_path.exists():
+        img = _load_and_crop(bg_path)
+    else:
+        img = Image.new("RGB", (WIDTH, HEIGHT), (20, 20, 20))
+
+    draw = ImageDraw.Draw(img)
+
+    # Label pill (accent color bg, white text)
+    label_font = load_font(_SCREENSHOT_LABEL_FONT_SIZE, bold=True)
+    label_text = slide.get("label", "")
+    bbox = draw.textbbox((0, 0), label_text, font=label_font)
+    lw = bbox[2] - bbox[0]
+    lh = bbox[3] - bbox[1]
+    pill_w = lw + 2 * _SCREENSHOT_LABEL_PAD_X
+    pill_h = lh + 2 * _SCREENSHOT_LABEL_PAD_Y
+    pill_x = (WIDTH - pill_w) // 2
+    pill_y = VALUE_TOP_BUBBLE_Y
+    draw.rounded_rectangle(
+        [(pill_x, pill_y), (pill_x + pill_w, pill_y + pill_h)],
+        radius=pill_h // 2,
+        fill=accent,
+    )
+    draw.text(
+        (WIDTH // 2, pill_y + _SCREENSHOT_LABEL_PAD_Y + lh // 2),
+        label_text,
+        font=label_font,
+        fill=(255, 255, 255),
+        anchor="mm",
+    )
+    y = pill_y + pill_h + 24
+
+    # Body bubble
+    body_font = load_font(VALUE_BODY_SIZE, bold=False)
+    body_bh = _bubble_height(draw, slide["body"], body_font)
+    _draw_bubble(draw, slide["body"], body_font, y)
+    y += body_bh + 44
+
+    # App screenshot composited below
+    screenshot_path = SANDRA_ASSETS_DIR / slide["app_screenshot"]
+    if screenshot_path.exists():
+        ss = Image.open(screenshot_path).convert("RGBA")
+        scale = _SCREENSHOT_MAX_W / ss.width
+        new_w = _SCREENSHOT_MAX_W
+        new_h = int(ss.height * scale)
+        max_h = HEIGHT - y - 80
+        if new_h > max_h:
+            scale = max_h / ss.height
+            new_w = int(ss.width * scale)
+            new_h = max_h
+        ss = ss.resize((new_w, new_h), Image.LANCZOS)
+        mask = Image.new("L", (new_w, new_h), 0)
+        ImageDraw.Draw(mask).rounded_rectangle([(0, 0), (new_w, new_h)], radius=_SCREENSHOT_CORNER_R, fill=255)
+        x_off = (WIDTH - new_w) // 2
+        img.paste(ss, (x_off, y), mask=mask)
+
+    img.save(output_path, "PNG")
+
 
 def _render_sandra_hook(hook_text: str, sandra_image: str, output_path: Path) -> None:
     """Slide 1: full-bleed Sandra photo with hook bubble in lower half."""
@@ -394,33 +467,57 @@ def _render_sandra_app_showcase(output_path: Path, app_name: str) -> None:
 def render_sandra_carousel(hook: str, items: list, output_dir: Path, app_name: str) -> None:
     """Render a full Sandra-style carousel.
 
-    items[0]  = {"sandra_image": "..."}                         hook metadata
-    items[1+] = {"headline": "...", "body": "...", "background_photo": "..."}  value slides
+    items[0]   = {"sandra_image": "..."}                                   hook metadata
+    items[1:-1] or items[1:] = value slides ({"headline", "body", "background_photo"})
+    items[-1]  = {"app_screenshot": "...", "label": "...", "body": "...", "background_photo": "..."}
+                 when an app screenshot slide is present (injected at mid-carousel position)
 
-    Fixed end slides added automatically: app showcase + homepage CTA.
+    Homepage CTA is always appended as the final slide.
+    App showcase slide is replaced by the app screenshot slide when present.
     """
     output_dir.mkdir(parents=True, exist_ok=True)
 
     sandra_image = items[0].get("sandra_image", "Sandra Neutral look.jpg")
-    value_slides = items[1:]
-    total = 1 + len(value_slides) + 1 + 1   # hook + values + showcase + cta
+    remaining = items[1:]
 
-    # Slide 1: Sandra hook
+    # Separate app screenshot slide from value slides
+    screenshot_slide = None
+    value_slides = []
+    for item in remaining:
+        if "app_screenshot" in item:
+            screenshot_slide = item
+        else:
+            value_slides.append(item)
+
+    # Inject screenshot as the last value slide (second-to-last before CTA)
+    if screenshot_slide:
+        value_slides.append(screenshot_slide)
+
+    # If no screenshot slide, fall back to the app showcase
+    use_showcase = screenshot_slide is None
+    total = 1 + len(value_slides) + (1 if use_showcase else 0) + 1
+
+    # Slide 1: hook
     path = output_dir / "slide_01.png"
     _render_sandra_hook(hook, sandra_image, path)
     print(f"    slide 01/{total:02d} → {path.name}  [{sandra_image}]")
 
-    # Value slides
+    # Value slides (including screenshot slide if present)
     for idx, slide in enumerate(value_slides, start=2):
         path = output_dir / f"slide_{idx:02d}.png"
-        _render_value(slide, path)
-        print(f"    slide {idx:02d}/{total:02d} → {path.name}")
+        if "app_screenshot" in slide:
+            _render_app_screenshot_slide(slide, path, app_name)
+            print(f"    slide {idx:02d}/{total:02d} → {path.name}  [app: {slide['app_screenshot']}]")
+        else:
+            _render_value(slide, path)
+            print(f"    slide {idx:02d}/{total:02d} → {path.name}")
 
-    # App showcase (second-to-last)
-    showcase_num = 1 + len(value_slides) + 1
-    path = output_dir / f"slide_{showcase_num:02d}.png"
-    _render_sandra_app_showcase(path, app_name)
-    print(f"    slide {showcase_num:02d}/{total:02d} → {path.name}")
+    # App showcase (only when no screenshot slide)
+    if use_showcase:
+        showcase_num = 1 + len(value_slides) + 1
+        path = output_dir / f"slide_{showcase_num:02d}.png"
+        _render_sandra_app_showcase(path, app_name)
+        print(f"    slide {showcase_num:02d}/{total:02d} → {path.name}")
 
     # Homepage CTA (last)
     path = output_dir / f"slide_{total:02d}.png"

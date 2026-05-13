@@ -47,7 +47,7 @@ Check off topics as you use them.
 - [X] `"lesser known migraine symptoms beyond head pain"`
 - [ ] `"what ocular migraines look like and what causes them"`
 - [ ] `"why migraines cause nausea and vomiting"`
-- [ ] `"migraine with brainstem aura — what it is"`
+- [X] `"migraine with brainstem aura — what it is"`
 - [X] `"why sound sensitivity spikes during a migraine"`
 - [ ] `"what hemiplegic migraines feel like"`
 - [ ] `"how to tell if your dizziness is migraine related"`

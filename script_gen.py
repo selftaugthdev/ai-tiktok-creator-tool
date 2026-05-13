@@ -7,6 +7,22 @@ import anthropic
 from app_config import get_app_config
 
 
+_EM_DASH_CHARS = "—–‒―"  # —, –, ‒, ―
+
+def _sanitize_em_dashes(obj):
+    """Recursively replace any em/en-dash in string values with a comma."""
+    if isinstance(obj, list):
+        for item in obj:
+            _sanitize_em_dashes(item)
+    elif isinstance(obj, dict):
+        for key, val in obj.items():
+            if isinstance(val, str):
+                for ch in _EM_DASH_CHARS:
+                    obj[key] = obj[key].replace(ch, ",")
+            else:
+                _sanitize_em_dashes(val)
+
+
 def generate_carousel(app_name: str, topic: str, num_slides: int = 7, style: str = "regular") -> list:
     """Call the Anthropic API to generate slide content for one carousel."""
     client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
@@ -85,7 +101,7 @@ TONE RULES — read these carefully:
 - Never open with the app. Never use clinical or corporate language. No "game-changer", "empower", "unlock", "journey", "dive into".
 - Write every slide as if spoken by someone who experiences this and has done the research themselves.
 - Value slides should feel like something a reader would screenshot and send to someone who doesn't understand their condition.
-- Do NOT use em-dashes (— or –) anywhere. Use commas or periods instead.
+- NEVER use em-dashes (— – ‒ ―) anywhere. This is a hard rule. Use a comma or period instead.
 - Only include facts that are well-established in published research. Do not speculate.
 - Return ONLY a valid JSON array. No markdown fences, no explanation."""
         max_tokens = 1024
@@ -129,7 +145,7 @@ Rules:
 - STAY ON TOPIC. Every value slide must directly address the exact situation in "{topic}". If the topic is about canceling plans, items cover the guilt, communication, and recovery — NOT general migraine science.
 - Items must be specific and non-obvious. No generic entries like "take medication", "rest", or "drink water."
 - Each item should feel like something a migraine sufferer would screenshot to show someone who doesn't understand them.
-- Do NOT use em-dashes (— or –) anywhere. Use commas or periods instead.
+- NEVER use em-dashes (— – ‒ ―) anywhere. This is a hard rule. Use a comma or period instead.
 - Only include information that is well-established in published research. Do not speculate or extrapolate.
 - Return ONLY a valid JSON array. No markdown fences, no explanation."""
         max_tokens = 2048
@@ -166,7 +182,7 @@ Copywriting rules for value slides — this is the most important part:
 
 General rules:
 - Headlines must be short and punchy — no filler words.
-- Do NOT use em-dashes (— or –) anywhere in the text. Use commas or periods instead.
+- NEVER use em-dashes (— – ‒ ―) anywhere in the text. This is a hard rule. Use a comma or period instead.
 - Only include information that is well-established in published research. Do not speculate or extrapolate. If a fact is uncertain, omit it rather than guess.
 - Return ONLY a valid JSON array. No markdown fences, no explanation."""
         max_tokens = 1024
@@ -205,6 +221,7 @@ General rules:
             if "body" not in slide:
                 raise ValueError(f"Slide {i + 1} is missing 'body' field.")
 
+    _sanitize_em_dashes(slides)
     return slides
 
 
@@ -221,7 +238,7 @@ Write exactly {n} alternative versions of this hook. Each version must:
 - Use a clearly different emotional angle or tone — rotate through: curiosity, emotional validation, authority/data, POV/first-person, pattern-interrupt
 - Be roughly the same length as the original
 - Work as a standalone TikTok scroll-stopper without context
-- NOT use em-dashes (— or –). Use commas or periods instead.
+- NOT use em-dashes (— – ‒ ―). This is a hard rule. Use a comma or period instead.
 
 Return ONLY a JSON array of {n} strings. No markdown, no explanation."""
 
@@ -257,7 +274,7 @@ HASHTAGS:
 [8-12 relevant hashtags as a single line]
 
 Rules:
-- No em-dashes (— or –). Use commas or periods instead.
+- No em-dashes (— – ‒ ―) anywhere. This is a hard rule. Use a comma or period instead.
 - No AI-sounding phrases like "game-changer", "dive into", "unlock", "journey", "empower".
 - Write like someone who has migraines talking to others who do.
 - The description should make people want to save the post."""

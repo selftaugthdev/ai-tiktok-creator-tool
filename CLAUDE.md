@@ -143,6 +143,13 @@ Model: `claude-sonnet-4-6`
 
 ---
 
+## PostBridge / TikTok Rules
+
+- **Always send TikTok posts as drafts** — set `draft: true` in `platform_configurations.tiktok` for every PostBridge post. Without this, TikTok auto-adds random music. The user sets the music manually in the TikTok app before publishing.
+- This applies to ALL scheduling scripts (`bulk-schedule-*.js`, any new scripts).
+
+---
+
 ## Known Gotchas
 
 - **Python version:** runs on Python 3.9. Avoid `X | Y` union type hints (3.10+ syntax) — use plain return types or `Optional`.

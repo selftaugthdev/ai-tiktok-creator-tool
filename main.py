@@ -20,15 +20,14 @@ from platforms import PLATFORMS
 from script_gen import generate_caption, generate_carousel, generate_hook_variants
 
 
-_HOOKS_FILE = Path("assets") / "migrainecast_50_hooks.md"
-_HOOKS_USED_FILE = Path("assets") / "migrainecast_hooks_used.json"
 _HOOKS_WARN_THRESHOLD = 10
 
 
-def _parse_hooks() -> list:
-    if not _HOOKS_FILE.exists():
-        sys.exit(f"Error: hooks file not found at {_HOOKS_FILE}")
-    text = _HOOKS_FILE.read_text(encoding="utf-8")
+def _parse_hooks(hooks_file: Path) -> list:
+    """Parse a numbered-list hooks file. Returns list of hook strings."""
+    if not hooks_file.exists():
+        sys.exit(f"Error: hooks file not found at {hooks_file}")
+    text = hooks_file.read_text(encoding="utf-8")
     hooks = []
     current_parts: list = []
     for line in text.splitlines():
@@ -51,46 +50,94 @@ def _parse_hooks() -> list:
     return hooks
 
 
-def _load_used() -> set:
-    if not _HOOKS_USED_FILE.exists():
+def _parse_hooks_mapped(hooks_file: Path) -> list:
+    """Parse a mapped hooks file (## Hook N / avatar: / text: format).
+
+    Returns list of dicts: [{"text": "...", "avatar": "lea_xxx.png"}, ...]
+    """
+    if not hooks_file.exists():
+        sys.exit(f"Error: hooks file not found at {hooks_file}")
+    text = hooks_file.read_text(encoding="utf-8")
+    hooks = []
+    current: dict = {}
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("## Hook"):
+            if current.get("text"):
+                hooks.append(current)
+            current = {}
+        elif stripped.startswith("avatar:"):
+            current["avatar"] = stripped[len("avatar:"):].strip()
+        elif stripped.startswith("text:"):
+            current["text"] = stripped[len("text:"):].strip()
+    if current.get("text"):
+        hooks.append(current)
+    return hooks
+
+
+def _load_used(used_file: Path) -> set:
+    if not used_file.exists():
         return set()
-    data = json.loads(_HOOKS_USED_FILE.read_text(encoding="utf-8"))
+    data = json.loads(used_file.read_text(encoding="utf-8"))
     return set(data.get("used", []))
 
 
-def _save_used(used: set) -> None:
-    _HOOKS_USED_FILE.write_text(
+def _save_used(used_file: Path, used: set) -> None:
+    used_file.write_text(
         json.dumps({"used": sorted(used)}, indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
 
 
-def load_random_hook() -> str:
-    hooks = _parse_hooks()
-    if not hooks:
-        sys.exit(f"Error: no hooks found in {_HOOKS_FILE}")
+def load_random_hook(app_name: str) -> dict:
+    """Return {"text": "...", "avatar": "filename.png" | None} for the app.
 
-    used = _load_used()
-    available = [h for h in hooks if h not in used]
+    Uses the mapped format if hooks_format == "mapped", otherwise numbered list.
+    Avatar is None for apps that let Claude pick the avatar.
+    """
+    from app_config import get_app_config
+    app_cfg = get_app_config(app_name)
+    hooks_file = app_cfg.get("hooks_file", Path("assets") / "migrainecast_50_hooks.md")
+    used_file = app_cfg.get("hooks_used_file", Path("assets") / "migrainecast_hooks_used.json")
+    hooks_format = app_cfg.get("hooks_format", "numbered")
 
-    if not available:
-        sys.exit(
-            f"All {len(hooks)} hooks have been used.\n"
-            f"Add new hooks to {_HOOKS_FILE} to continue."
-        )
-
-    chosen = random.choice(available)
-    used.add(chosen)
-    _save_used(used)
-
-    remaining = len(available) - 1
-    if remaining <= _HOOKS_WARN_THRESHOLD:
-        print(
-            f"WARNING: only {remaining} hook(s) left unused. "
-            f"Add more hooks to {_HOOKS_FILE} soon.\n"
-        )
-
-    return chosen
+    if hooks_format == "mapped":
+        raw_hooks = _parse_hooks_mapped(hooks_file)
+        # De-duplicate key for "used" tracking is the hook text
+        if not raw_hooks:
+            sys.exit(f"Error: no hooks found in {hooks_file}")
+        used = _load_used(used_file)
+        available = [h for h in raw_hooks if h["text"] not in used]
+        if not available:
+            sys.exit(
+                f"All {len(raw_hooks)} hooks have been used.\n"
+                f"Add new hooks to {hooks_file} to continue."
+            )
+        chosen = random.choice(available)
+        used.add(chosen["text"])
+        _save_used(used_file, used)
+        remaining = len(available) - 1
+        if remaining <= _HOOKS_WARN_THRESHOLD:
+            print(f"WARNING: only {remaining} hook(s) left unused. Add more to {hooks_file} soon.\n")
+        return {"text": chosen["text"], "avatar": chosen.get("avatar")}
+    else:
+        hooks = _parse_hooks(hooks_file)
+        if not hooks:
+            sys.exit(f"Error: no hooks found in {hooks_file}")
+        used = _load_used(used_file)
+        available = [h for h in hooks if h not in used]
+        if not available:
+            sys.exit(
+                f"All {len(hooks)} hooks have been used.\n"
+                f"Add new hooks to {hooks_file} to continue."
+            )
+        chosen = random.choice(available)
+        used.add(chosen)
+        _save_used(used_file, used)
+        remaining = len(available) - 1
+        if remaining <= _HOOKS_WARN_THRESHOLD:
+            print(f"WARNING: only {remaining} hook(s) left unused. Add more to {hooks_file} soon.\n")
+        return {"text": chosen, "avatar": None}
 
 
 def parse_args() -> argparse.Namespace:
@@ -215,10 +262,15 @@ def main() -> None:
     for i in range(args.count):
         # Pick hook for this iteration
         if args.auto:
-            base_topic = load_random_hook()
+            hook_info = load_random_hook(args.app)
+            base_topic = hook_info["text"]
+            base_avatar = hook_info.get("avatar")
             print(f"[hook {i + 1}/{args.count}] {base_topic!r}")
+            if base_avatar:
+                print(f"  avatar: {base_avatar}")
         else:
             base_topic = args.topic
+            base_avatar = None
 
         # Build slug from the base hook (shared across all its variants)
         _slug_words = re.sub(r'[^a-z0-9\s]', '', base_topic.lower()).split()[:6]
@@ -232,14 +284,15 @@ def main() -> None:
             except Exception as exc:
                 print(f"  Warning: variant generation failed ({exc}), duplicating original.", file=sys.stderr)
                 extra_hooks = [base_topic] * (n_variants - 1)
-            all_hooks = [base_topic] + extra_hooks
-            for v_idx, vh in enumerate(all_hooks, start=1):
+            # Variants share the same avatar as the base hook
+            all_hooks = [(base_topic, base_avatar)] + [(h, base_avatar) for h in extra_hooks]
+            for v_idx, (vh, _) in enumerate(all_hooks, start=1):
                 print(f"    v{v_idx}: {vh!r}")
             print()
         else:
-            all_hooks = [base_topic]
+            all_hooks = [(base_topic, base_avatar)]
 
-        for v_idx, topic in enumerate(all_hooks, start=1):
+        for v_idx, (topic, hook_avatar) in enumerate(all_hooks, start=1):
             v_suffix = f"-v{v_idx}" if n_variants > 1 else ""
             carousel_num = next_num + carousel_counter
             carousel_counter += 1
@@ -248,9 +301,9 @@ def main() -> None:
             label = f"[hook {i + 1}/{args.count}, v{v_idx}/{n_variants}]" if n_variants > 1 else f"[{i + 1}/{args.count}]"
 
             if args.style == "sandra":
-                print(f"{label} Fetching Sandra content from Claude...")
+                print(f"{label} Fetching avatar carousel content from Claude...")
                 try:
-                    items = generate_sandra_carousel(topic, args.slides)
+                    items = generate_sandra_carousel(topic, args.slides, args.app, avatar_override=hook_avatar)
                 except Exception as exc:
                     print(f"  Error generating content: {exc}", file=sys.stderr)
                     continue
