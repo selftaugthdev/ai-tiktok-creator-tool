@@ -89,6 +89,11 @@ def _save_used(used_file: Path, used: set) -> None:
     )
 
 
+def _strip_em_dashes(text: str) -> str:
+    """Replace em/en dashes with commas so they never appear on slides."""
+    return text.replace(" — ", ", ").replace(" – ", ", ").replace("—", ", ").replace("–", ", ")
+
+
 def load_random_hook(app_name: str) -> dict:
     """Return {"text": "...", "avatar": "filename.png" | None} for the app.
 
@@ -119,7 +124,7 @@ def load_random_hook(app_name: str) -> dict:
         remaining = len(available) - 1
         if remaining <= _HOOKS_WARN_THRESHOLD:
             print(f"WARNING: only {remaining} hook(s) left unused. Add more to {hooks_file} soon.\n")
-        return {"text": chosen["text"], "avatar": chosen.get("avatar")}
+        return {"text": _strip_em_dashes(chosen["text"]), "avatar": chosen.get("avatar")}
     else:
         hooks = _parse_hooks(hooks_file)
         if not hooks:
@@ -137,7 +142,7 @@ def load_random_hook(app_name: str) -> dict:
         remaining = len(available) - 1
         if remaining <= _HOOKS_WARN_THRESHOLD:
             print(f"WARNING: only {remaining} hook(s) left unused. Add more to {hooks_file} soon.\n")
-        return {"text": chosen, "avatar": None}
+        return {"text": _strip_em_dashes(chosen), "avatar": None}
 
 
 def parse_args() -> argparse.Namespace:

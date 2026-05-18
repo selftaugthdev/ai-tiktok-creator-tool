@@ -96,6 +96,14 @@ IMPORTANT: "Sandra looking at camera no smile.jpg" is for myth-busting only — 
         # Content
         "audience": "panic attack sufferer",
         "mechanism_examples": "the fight-or-flight response, adrenaline spikes, the amygdala hijack, hyperventilation cycles, nervous system dysregulation",
+        # App screenshot slides (injected into Sandra carousels instead of showcase slide)
+        "app_carousel_screenshots": [
+            "calmsos-breathing-exercises.png",
+            "calmsos-home.png",
+            "calmsos-muscle-relaxation.png",
+            "calmsos-panic-screen.png",
+            "calmsos-tools-screen.png",
+        ],
         # Avatar carousel — avatars are pre-mapped per hook in the hooks file
         "hooks_file": Path("assets") / "calmsos_hooks_mapped.md",
         "hooks_used_file": Path("assets") / "calm_sos_hooks_used.json",

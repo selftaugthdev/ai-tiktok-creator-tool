@@ -3,9 +3,9 @@
 ## 🧠 Educational / Informational
 
 1. What actually happens in your body during a panic attack (step by step)
-2. The difference between anxiety and a panic attack
+2. X The difference between anxiety and a panic attack
 3. What is generalized anxiety disorder (GAD)?
-4. The fight-or-flight response explained simply
+4. X The fight-or-flight response explained simply
 5. Why your heart races during anxiety (it's not a heart attack)
 6. What is cortisol and why it's wrecking your body
 7. The vagus nerve — your secret weapon against anxiety
